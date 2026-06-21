@@ -1,54 +1,88 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 220">
-  <!-- Outer circle -->
-  <circle cx="100" cy="95" r="93" fill="#388E3C" stroke="#2E7D32" stroke-width="3"/>
-  <circle cx="100" cy="95" r="68" fill="white" stroke="#4CAF50" stroke-width="2"/>
-  <!-- Ground -->
-  <rect x="32" y="115" width="136" height="30" rx="2" fill="#795548"/>
-  <rect x="32" y="110" width="136" height="10" fill="#8D6E63"/>
-  <!-- Coconut palm -->
-  <path d="M100 140 Q97 115 95 95 Q93 80 97 65" stroke="#5D4037" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 440">
+  <!-- Outer green ring -->
+  <circle cx="200" cy="190" r="186" fill="#2E8B3A" stroke="#1B6E28" stroke-width="5"/>
+  <circle cx="200" cy="190" r="136" fill="white" stroke="#3EB54A" stroke-width="3"/>
+
+  <!-- Ground/soil -->
+  <rect x="64" y="235" width="272" height="60" rx="3" fill="#6D4C2A"/>
+  <rect x="64" y="225" width="272" height="18" fill="#8B6E45"/>
+
+  <!-- Coconut palm trunk -->
+  <path d="M200 285 Q195 245 192 210 Q189 185 193 160 Q196 140 200 125" stroke="#3A2A10" stroke-width="9" fill="none" stroke-linecap="round"/>
+
   <!-- Fronds -->
-  <path d="M97 65 Q80 45 58 40" stroke="#2E7D32" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-  <path d="M97 65 Q85 40 72 30" stroke="#2E7D32" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-  <path d="M97 65 Q97 35 97 25" stroke="#2E7D32" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-  <path d="M97 65 Q109 40 122 30" stroke="#2E7D32" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-  <path d="M97 65 Q115 45 138 40" stroke="#2E7D32" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-  <path d="M97 65 Q115 50 140 50" stroke="#2E7D32" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-  <path d="M97 65 Q78 50 55 50" stroke="#2E7D32" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-  <!-- Coconuts -->
-  <circle cx="95" cy="67" r="3.5" fill="#4CAF50"/>
-  <circle cx="101" cy="69" r="3.5" fill="#4CAF50"/>
-  <circle cx="98" cy="63" r="3.5" fill="#4CAF50"/>
+  <g stroke="#1B5E20" fill="none" stroke-linecap="round" stroke-width="3.5">
+    <path d="M200 125 Q170 95 130 78"/>
+    <path d="M200 125 Q178 85 155 60"/>
+    <path d="M200 125 Q195 80 192 50"/>
+    <path d="M200 125 Q215 80 235 58"/>
+    <path d="M200 125 Q228 92 260 76"/>
+    <path d="M200 125 Q235 100 275 92"/>
+    <path d="M200 125 Q240 115 278 112"/>
+    <path d="M200 125 Q162 115 125 118"/>
+  </g>
+
+  <!-- Coconuts (green) -->
+  <circle cx="196" cy="129" r="6.5" fill="#4CAF50"/>
+  <circle cx="206" cy="132" r="6.5" fill="#4CAF50"/>
+  <circle cx="201" cy="122" r="6.5" fill="#4CAF50"/>
+
   <!-- Cow silhouette -->
-  <g transform="translate(118,100) scale(0.4)">
-    <ellipse cx="0" cy="0" rx="28" ry="14" fill="#333"/>
-    <circle cx="-22" cy="-8" r="8" fill="#333"/>
-    <rect x="-18" y="10" width="5" height="14" fill="#333"/>
-    <rect x="-8" y="10" width="5" height="14" fill="#333"/>
-    <rect x="8" y="10" width="5" height="14" fill="#333"/>
-    <rect x="18" y="10" width="5" height="14" fill="#333"/>
-    <path d="M22,-5 Q28,-2 25,2" stroke="#333" stroke-width="2" fill="none"/>
+  <g transform="translate(248,205) scale(0.7)">
+    <ellipse cx="0" cy="0" rx="35" ry="17" fill="#111"/>
+    <circle cx="-28" cy="-10" r="10" fill="#111"/>
+    <rect x="-25" y="12" width="7" height="18" fill="#111"/>
+    <rect x="-12" y="12" width="7" height="18" fill="#111"/>
+    <rect x="10" y="12" width="7" height="18" fill="#111"/>
+    <rect x="23" y="12" width="7" height="18" fill="#111"/>
+    <path d="M-35,-15 Q-40,-22 -36,-18" stroke="#111" stroke-width="2.5" fill="none"/>
+    <path d="M-32,-18 Q-28,-25 -25,-18" stroke="#111" stroke-width="2" fill="none"/>
+    <path d="M28,-3 Q38,0 33,5" stroke="#111" stroke-width="2.5" fill="none"/>
   </g>
+
   <!-- Small tree -->
-  <g transform="translate(58,102) scale(0.5)">
-    <rect x="-2" y="0" width="4" height="16" fill="#5D4037"/>
-    <circle cx="0" cy="-5" r="10" fill="#4CAF50" opacity="0.7"/>
+  <g transform="translate(120,210) scale(0.8)">
+    <rect x="-3" y="0" width="6" height="22" fill="#5D4037"/>
+    <circle cx="0" cy="-8" r="15" fill="#4CAF50" opacity="0.8"/>
+    <circle cx="-8" cy="-3" r="10" fill="#388E3C" opacity="0.7"/>
+    <circle cx="8" cy="-3" r="10" fill="#388E3C" opacity="0.7"/>
   </g>
-  <!-- Text arcs -->
+
+  <!-- Chickens/birds on ground -->
+  <g transform="translate(160,230) scale(0.5)">
+    <ellipse cx="0" cy="0" rx="8" ry="6" fill="#8B4513"/>
+    <circle cx="-7" cy="-5" r="3" fill="#A0522D"/>
+    <path d="M-10,-5 L-14,-4" stroke="#8B4513" stroke-width="1.5"/>
+    <rect x="-4" y="4" width="2" height="6" fill="#8B4513"/>
+    <rect x="2" y="4" width="2" height="6" fill="#8B4513"/>
+  </g>
+  <g transform="translate(175,235) scale(0.4)">
+    <ellipse cx="0" cy="0" rx="7" ry="5" fill="#A0522D"/>
+    <circle cx="-6" cy="-4" r="2.5" fill="#B8733A"/>
+  </g>
+
+  <!-- Text on green ring -->
   <defs>
-    <path id="topArcA" d="M18,95 a82,82 0 0,1 164,0"/>
-    <path id="bottomArcA" d="M175,100 a78,78 0 0,1 -150,0"/>
+    <path id="topArcA" d="M30,190 a170,170 0 0,1 340,0"/>
+    <path id="bottomArcA" d="M365,200 a168,168 0 0,1 -330,0"/>
   </defs>
-  <text font-family="Arial Black, sans-serif" font-size="13" font-weight="900" fill="white" letter-spacing="2.5">
+
+  <text font-family="'Arial Black', 'Impact', sans-serif" font-size="28" font-weight="900" fill="white" letter-spacing="4">
     <textPath href="#topArcA" startOffset="50%" text-anchor="middle">AGRONOMY DIVISION</textPath>
   </text>
-  <text font-family="Arial Black, sans-serif" font-size="9.5" font-weight="900" fill="white" letter-spacing="1.5">
+
+  <text font-family="'Arial Black', 'Impact', sans-serif" font-size="18" font-weight="900" fill="white" letter-spacing="2.5">
     <textPath href="#bottomArcA" startOffset="50%" text-anchor="middle">COCONUT RESEARCH INSTITUTE</textPath>
   </text>
-  <!-- Banner ribbon -->
-  <path d="M15,185 L35,175 L165,175 L185,185 L175,195 L165,190 L35,190 L25,195 Z" fill="#1B5E20"/>
-  <rect x="35" y="175" width="130" height="15" fill="#2E7D32" rx="1"/>
-  <text x="100" y="187" font-family="Arial, sans-serif" font-size="5.5" fill="white" text-anchor="middle" font-weight="600" letter-spacing="0.3">Productivity Enhancement through Agronomic Practices</text>
-  <text x="100" y="200" font-family="Arial, sans-serif" font-size="5" fill="#2E7D32" text-anchor="middle">කෘෂිකාර්මික ක්‍රම තුලින් ඵලදායිතාවය නිපැයුම</text>
-  <text x="100" y="210" font-family="Arial, sans-serif" font-size="5" fill="#2E7D32" text-anchor="middle">வேளாண்மை முறைமைகளின் மூலம் விளைச்சல் திறனை அதிகரித்தல்</text>
+
+  <!-- Dark green ribbon banner -->
+  <path d="M25,385 L55,370 L345,370 L375,385 L360,400 L345,392 L55,392 L40,400 Z" fill="#0D3B0D"/>
+  <rect x="55" y="370" width="290" height="22" fill="#1B5E20" rx="2"/>
+
+  <!-- Banner text -->
+  <text x="200" y="386" font-family="Arial, sans-serif" font-size="10" fill="white" text-anchor="middle" font-weight="600" letter-spacing="0.4">Productivity Enhancement through Agronomic Practices</text>
+
+  <!-- Sinhala & Tamil below banner -->
+  <text x="200" y="408" font-family="sans-serif" font-size="9" fill="#1B5E20" text-anchor="middle" font-weight="600">කෘෂිකාර්මික ක්‍රම තුලින් ඵලදායිතාවය නිපැයුම</text>
+  <text x="200" y="424" font-family="sans-serif" font-size="9" fill="#1B5E20" text-anchor="middle" font-weight="600">வேளாண்மை முறைமைகளின் மூலம் விளைச்சல் திறனை அதிகரித்தல்</text>
 </svg>

@@ -116,6 +116,44 @@
         }
         .view-toggle-btn:hover { background: #f4f4f4; }
 
+        /* Selection toolbar */
+        .selection-toolbar {
+            position: fixed; bottom: 10px; left: 50%; transform: translateX(-50%);
+            z-index: 1001; background: white; border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.25); padding: 8px 12px;
+            display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
+            max-width: 95vw; font-size: 12px;
+        }
+        .sel-btn {
+            padding: 5px 10px; border-radius: 6px; border: 1px solid #ddd;
+            background: white; font-size: 11px; font-weight: 600; cursor: pointer;
+            transition: all 0.2s; white-space: nowrap;
+        }
+        .sel-btn:hover { background: #f0f0f0; }
+        .sel-btn.active { background: #3a7d44; color: white; border-color: #3a7d44; }
+        .sel-count { font-weight: 700; color: #3a7d44; font-size: 12px; }
+        .sel-export { background: #2563eb; color: white; border-color: #2563eb; }
+        .sel-export:hover { background: #1d4ed8; }
+        .sel-clear { background: #dc2626; color: white; border-color: #dc2626; }
+        .sel-clear:hover { background: #b91c1c; }
+
+        /* Comment box in popup */
+        .popup-comment-area {
+            width: 100%; min-height: 40px; border: 1px solid #ddd; border-radius: 6px;
+            padding: 6px 8px; font-size: 11px; font-family: sans-serif; resize: vertical;
+            margin-top: 6px;
+        }
+        .popup-comment-btn {
+            margin-top: 4px; padding: 4px 10px; border-radius: 4px; border: none;
+            font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+        }
+        .popup-save-btn { background: #3a7d44; color: white; }
+        .popup-save-btn:hover { background: #2a5c32; }
+        .popup-coord-btn { background: #2563eb; color: white; margin-left: 4px; }
+        .popup-coord-btn:hover { background: #1d4ed8; }
+        .popup-select-btn { background: #f59e0b; color: white; margin-left: 4px; }
+        .popup-select-btn:hover { background: #d97706; }
+
         /* Interactive Legend */
         .ndvi-legend {
             background: white;
@@ -256,6 +294,22 @@
         <div id="map">
         </div>
         <button class="view-toggle-btn" id="viewToggle" onclick="toggleView()" title="Switch desktop/mobile view">🖥️ Desktop</button>
+        <div class="selection-toolbar" id="selToolbar">
+          <span style="font-weight:700;font-size:12px;">Filter:</span>
+          <select id="selHealthFilter" class="sel-btn" onchange="filterByHealth()" style="padding:4px 6px;">
+            <option value="all">All Health</option>
+            <option value="healthy">Healthy</option>
+            <option value="moderate">Moderate</option>
+            <option value="unhealthy">Unhealthy</option>
+            <option value="mid_stress">Mid Stress</option>
+            <option value="severe">Severe Stress</option>
+            <option value="critical">Critical</option>
+          </select>
+          <span class="sel-count" id="selCount">0 selected</span>
+          <button class="sel-btn sel-export" onclick="exportSelectedGPX()" title="Export to GPX for handheld GPS">📍 Export GPX</button>
+          <button class="sel-btn sel-export" onclick="exportSelectedCSV()" title="Export to CSV/Excel" style="background:#059669;border-color:#059669;">📊 Export CSV</button>
+          <button class="sel-btn sel-clear" onclick="clearSelection()">✕ Clear</button>
+        </div>
         <script src="js/qgis2web_expressions.js"></script>
         <script src="js/leaflet.js"></script>
         <script src="js/L.Control.Layers.Tree.min.js"></script>
@@ -475,52 +529,10 @@
         bounds_group.addLayer(layer_Boundary_2);
         map.addLayer(layer_Boundary_2);
         function pop_Critical_3(feature, layer) {
-            layer.on({
-                mouseout: function(e) {
-                    if (typeof layer.closePopup == 'function') {
-                        layer.closePopup();
-                    } else {
-                        layer.eachLayer(function(feature){
-                            feature.closePopup()
-                        });
-                    }
-                },
-                mouseover: highlightFeature,
-            });
-            var ndviValue = feature.properties['MEAN'] ? parseFloat(feature.properties['MEAN']).toFixed(4) : 'N/A';
-            var popupContent = '<div class="popup-header">🔴 Critical Health Status</div>' +
-                            '<table class="popup-table">' +
-                            '<tr>' +
-                            '<td>Classification:</td>' +
-                            '<td><strong>CRITICAL</strong></td>' +
-                            '</tr>' +
-                            '<tr>' +
-                            '<td>Class:</td>' +
-                            '<td>' + (feature.properties['Class'] !== null ? String(feature.properties['Class']).replace(/'/g, '\'').toLocaleString() : 'N/A') + '</td>' +
-                            '</tr>' +
-                            '<tr>' +
-                            '<td>NDVI Value:</td>' +
-                            '<td><strong style="color: #c0392b;">' + ndviValue + '</strong></td>' +
-                            '</tr>' +
-                            '<tr>' +
-                            '<td>NDVI Class:</td>' +
-                            '<td>' + (feature.properties['NDVI_Class'] !== null ? String(feature.properties['NDVI_Class']).replace(/'/g, '\'').toLocaleString() : 'N/A') + '</td>' +
-                            '</tr>' +
-                            '<tr>' +
-                            '<td>Confidence:</td>' +
-                            '<td>' + (feature.properties['Confidence'] !== null ? String(feature.properties['Confidence']).replace(/'/g, '\'').toLocaleString() : 'N/A') + '</td>' +
-                            '</tr>' +
-                            '<tr>' +
-                            '<td>Location ID:</td>' +
-                            '<td>' + (feature.properties['OBJECTID_1'] !== null ? String(feature.properties['OBJECTID_1']).replace(/'/g, '\'').toLocaleString() : 'N/A') + '</td>' +
-                            '</tr>' +
-                            '</table>' +
-                            '<div class="popup-status status-unhealthy" style="margin-top: 8px;">🚨 Immediate Action Required</div>';
-            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
-			layer.on('popupopen', function(e) {
-				addClassToPopupIfMedia(content, e.popup);
-			});
-			layer.bindPopup(content, { maxHeight: 400 });
+            layer.on({ mouseout: function(e) { if (typeof layer.closePopup == 'function') layer.closePopup(); else layer.eachLayer(function(f){ f.closePopup(); }); }, mouseover: highlightFeature });
+            var content = buildEnhancedPopup(feature, 'Critical', '🔴', 'status-unhealthy', '#c0392b');
+            layer.on('popupopen', function(e) { addClassToPopupIfMedia(content, e.popup); });
+            layer.bindPopup(content, { maxHeight: 500, maxWidth: 320 });
         }
 
         function style_Critical_3_0() {
@@ -553,52 +565,10 @@
         bounds_group.addLayer(layer_Critical_3);
         map.addLayer(layer_Critical_3);
         function pop_Severs_Stress_4(feature, layer) {
-            layer.on({
-                mouseout: function(e) {
-                    if (typeof layer.closePopup == 'function') {
-                        layer.closePopup();
-                    } else {
-                        layer.eachLayer(function(feature){
-                            feature.closePopup()
-                        });
-                    }
-                },
-                mouseover: highlightFeature,
-            });
-            var ndviValue = feature.properties['MEAN'] ? parseFloat(feature.properties['MEAN']).toFixed(4) : 'N/A';
-            var popupContent = '<div class="popup-header">🔶 Severe Stress Status</div>' +
-                            '<table class="popup-table">' +
-                            '<tr>' +
-                            '<td>Classification:</td>' +
-                            '<td><strong>SEVERE STRESS</strong></td>' +
-                            '</tr>' +
-                            '<tr>' +
-                            '<td>Class:</td>' +
-                            '<td>' + (feature.properties['Class'] !== null ? String(feature.properties['Class']).replace(/'/g, '\'').toLocaleString() : 'N/A') + '</td>' +
-                            '</tr>' +
-                            '<tr>' +
-                            '<td>NDVI Value:</td>' +
-                            '<td><strong style="color: #c0392b;">' + ndviValue + '</strong></td>' +
-                            '</tr>' +
-                            '<tr>' +
-                            '<td>NDVI Class:</td>' +
-                            '<td>' + (feature.properties['NDVI_Class'] !== null ? String(feature.properties['NDVI_Class']).replace(/'/g, '\'').toLocaleString() : 'N/A') + '</td>' +
-                            '</tr>' +
-                            '<tr>' +
-                            '<td>Confidence:</td>' +
-                            '<td>' + (feature.properties['Confidence'] !== null ? String(feature.properties['Confidence']).replace(/'/g, '\'').toLocaleString() : 'N/A') + '</td>' +
-                            '</tr>' +
-                            '<tr>' +
-                            '<td>Location ID:</td>' +
-                            '<td>' + (feature.properties['OBJECTID_1'] !== null ? String(feature.properties['OBJECTID_1']).replace(/'/g, '\'').toLocaleString() : 'N/A') + '</td>' +
-                            '</tr>' +
-                            '</table>' +
-                            '<div class="popup-status status-unhealthy" style="margin-top: 8px;">⚠️ Treatment Recommended</div>';
-            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
-			layer.on('popupopen', function(e) {
-				addClassToPopupIfMedia(content, e.popup);
-			});
-			layer.bindPopup(content, { maxHeight: 400 });
+            layer.on({ mouseout: function(e) { if (typeof layer.closePopup == 'function') layer.closePopup(); else layer.eachLayer(function(f){ f.closePopup(); }); }, mouseover: highlightFeature });
+            var content = buildEnhancedPopup(feature, 'Severe Stress', '🔶', 'status-unhealthy', '#c0392b');
+            layer.on('popupopen', function(e) { addClassToPopupIfMedia(content, e.popup); });
+            layer.bindPopup(content, { maxHeight: 500, maxWidth: 320 });
         }
 
         function style_Severs_Stress_4_0() {
@@ -631,52 +601,10 @@
         bounds_group.addLayer(layer_Severs_Stress_4);
         map.addLayer(layer_Severs_Stress_4);
         function pop_Mid_Stress_5(feature, layer) {
-            layer.on({
-                mouseout: function(e) {
-                    if (typeof layer.closePopup == 'function') {
-                        layer.closePopup();
-                    } else {
-                        layer.eachLayer(function(feature){
-                            feature.closePopup()
-                        });
-                    }
-                },
-                mouseover: highlightFeature,
-            });
-            var ndviValue = feature.properties['MEAN'] ? parseFloat(feature.properties['MEAN']).toFixed(4) : 'N/A';
-            var popupContent = '<div class="popup-header">🟠 Mild Stress Status</div>' +
-                            '<table class="popup-table">' +
-                            '<tr>' +
-                            '<td>Classification:</td>' +
-                            '<td><strong>MILD STRESS</strong></td>' +
-                            '</tr>' +
-                            '<tr>' +
-                            '<td>Class:</td>' +
-                            '<td>' + (feature.properties['Class'] !== null ? String(feature.properties['Class']).replace(/'/g, '\'').toLocaleString() : 'N/A') + '</td>' +
-                            '</tr>' +
-                            '<tr>' +
-                            '<td>NDVI Value:</td>' +
-                            '<td><strong style="color: #e07b2a;">' + ndviValue + '</strong></td>' +
-                            '</tr>' +
-                            '<tr>' +
-                            '<td>NDVI Class:</td>' +
-                            '<td>' + (feature.properties['NDVI_Class'] !== null ? String(feature.properties['NDVI_Class']).replace(/'/g, '\'').toLocaleString() : 'N/A') + '</td>' +
-                            '</tr>' +
-                            '<tr>' +
-                            '<td>Confidence:</td>' +
-                            '<td>' + (feature.properties['Confidence'] !== null ? String(feature.properties['Confidence']).replace(/'/g, '\'').toLocaleString() : 'N/A') + '</td>' +
-                            '</tr>' +
-                            '<tr>' +
-                            '<td>Location ID:</td>' +
-                            '<td>' + (feature.properties['OBJECTID_1'] !== null ? String(feature.properties['OBJECTID_1']).replace(/'/g, '\'').toLocaleString() : 'N/A') + '</td>' +
-                            '</tr>' +
-                            '</table>' +
-                            '<div class="popup-status status-moderate" style="margin-top: 8px;">📋 Monitor Closely</div>';
-            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
-			layer.on('popupopen', function(e) {
-				addClassToPopupIfMedia(content, e.popup);
-			});
-			layer.bindPopup(content, { maxHeight: 400 });
+            layer.on({ mouseout: function(e) { if (typeof layer.closePopup == 'function') layer.closePopup(); else layer.eachLayer(function(f){ f.closePopup(); }); }, mouseover: highlightFeature });
+            var content = buildEnhancedPopup(feature, 'Mid Stress', '🟠', 'status-moderate', '#e07b2a');
+            layer.on('popupopen', function(e) { addClassToPopupIfMedia(content, e.popup); });
+            layer.bindPopup(content, { maxHeight: 500, maxWidth: 320 });
         }
 
         function style_Mid_Stress_5_0() {
@@ -709,52 +637,10 @@
         bounds_group.addLayer(layer_Mid_Stress_5);
         map.addLayer(layer_Mid_Stress_5);
         function pop_Unhealthy_6(feature, layer) {
-            layer.on({
-                mouseout: function(e) {
-                    if (typeof layer.closePopup == 'function') {
-                        layer.closePopup();
-                    } else {
-                        layer.eachLayer(function(feature){
-                            feature.closePopup()
-                        });
-                    }
-                },
-                mouseover: highlightFeature,
-            });
-            var ndviValue = feature.properties['MEAN'] ? parseFloat(feature.properties['MEAN']).toFixed(4) : 'N/A';
-            var popupContent = '<div class="popup-header">🚨 Unhealthy Status</div>' +
-                            '<table class="popup-table">' +
-                            '<tr>' +
-                            '<td>Classification:</td>' +
-                            '<td><strong>UNHEALTHY</strong></td>' +
-                            '</tr>' +
-                            '<tr>' +
-                            '<td>Class:</td>' +
-                            '<td>' + (feature.properties['Class'] !== null ? String(feature.properties['Class']).replace(/'/g, '\'').toLocaleString() : 'N/A') + '</td>' +
-                            '</tr>' +
-                            '<tr>' +
-                            '<td>NDVI Value:</td>' +
-                            '<td><strong style="color: #c0392b;">' + ndviValue + '</strong></td>' +
-                            '</tr>' +
-                            '<tr>' +
-                            '<td>NDVI Class:</td>' +
-                            '<td>' + (feature.properties['NDVI_Class'] !== null ? String(feature.properties['NDVI_Class']).replace(/'/g, '\'').toLocaleString() : 'N/A') + '</td>' +
-                            '</tr>' +
-                            '<tr>' +
-                            '<td>Confidence:</td>' +
-                            '<td>' + (feature.properties['Confidence'] !== null ? String(feature.properties['Confidence']).replace(/'/g, '\'').toLocaleString() : 'N/A') + '</td>' +
-                            '</tr>' +
-                            '<tr>' +
-                            '<td>Location ID:</td>' +
-                            '<td>' + (feature.properties['OBJECTID_1'] !== null ? String(feature.properties['OBJECTID_1']).replace(/'/g, '\'').toLocaleString() : 'N/A') + '</td>' +
-                            '</tr>' +
-                            '</table>' +
-                            '<div class="popup-status status-unhealthy" style="margin-top: 8px;">🚨 Urgent Action</div>';
-            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
-			layer.on('popupopen', function(e) {
-				addClassToPopupIfMedia(content, e.popup);
-			});
-			layer.bindPopup(content, { maxHeight: 400 });
+            layer.on({ mouseout: function(e) { if (typeof layer.closePopup == 'function') layer.closePopup(); else layer.eachLayer(function(f){ f.closePopup(); }); }, mouseover: highlightFeature });
+            var content = buildEnhancedPopup(feature, 'Unhealthy', '🚨', 'status-unhealthy', '#c0392b');
+            layer.on('popupopen', function(e) { addClassToPopupIfMedia(content, e.popup); });
+            layer.bindPopup(content, { maxHeight: 500, maxWidth: 320 });
         }
 
         function style_Unhealthy_6_0() {
@@ -787,52 +673,10 @@
         bounds_group.addLayer(layer_Unhealthy_6);
         map.addLayer(layer_Unhealthy_6);
         function pop_Moderate_7(feature, layer) {
-            layer.on({
-                mouseout: function(e) {
-                    if (typeof layer.closePopup == 'function') {
-                        layer.closePopup();
-                    } else {
-                        layer.eachLayer(function(feature){
-                            feature.closePopup()
-                        });
-                    }
-                },
-                mouseover: highlightFeature,
-            });
-            var ndviValue = feature.properties['MEAN'] ? parseFloat(feature.properties['MEAN']).toFixed(4) : 'N/A';
-            var popupContent = '<div class="popup-header">🟡 Moderate Stress Status</div>' +
-                            '<table class="popup-table">' +
-                            '<tr>' +
-                            '<td>Classification:</td>' +
-                            '<td><strong>MODERATE STRESS</strong></td>' +
-                            '</tr>' +
-                            '<tr>' +
-                            '<td>Class:</td>' +
-                            '<td>' + (feature.properties['Class'] !== null ? String(feature.properties['Class']).replace(/'/g, '\'').toLocaleString() : 'N/A') + '</td>' +
-                            '</tr>' +
-                            '<tr>' +
-                            '<td>NDVI Value:</td>' +
-                            '<td><strong style="color: #c47600;">' + ndviValue + '</strong></td>' +
-                            '</tr>' +
-                            '<tr>' +
-                            '<td>NDVI Class:</td>' +
-                            '<td>' + (feature.properties['NDVI_Class'] !== null ? String(feature.properties['NDVI_Class']).replace(/'/g, '\'').toLocaleString() : 'N/A') + '</td>' +
-                            '</tr>' +
-                            '<tr>' +
-                            '<td>Confidence:</td>' +
-                            '<td>' + (feature.properties['Confidence'] !== null ? String(feature.properties['Confidence']).replace(/'/g, '\'').toLocaleString() : 'N/A') + '</td>' +
-                            '</tr>' +
-                            '<tr>' +
-                            '<td>Location ID:</td>' +
-                            '<td>' + (feature.properties['OBJECTID_1'] !== null ? String(feature.properties['OBJECTID_1']).replace(/'/g, '\'').toLocaleString() : 'N/A') + '</td>' +
-                            '</tr>' +
-                            '</table>' +
-                            '<div class="popup-status status-moderate" style="margin-top: 8px;">⚠️ Monitoring Needed</div>';
-            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
-			layer.on('popupopen', function(e) {
-				addClassToPopupIfMedia(content, e.popup);
-			});
-			layer.bindPopup(content, { maxHeight: 400 });
+            layer.on({ mouseout: function(e) { if (typeof layer.closePopup == 'function') layer.closePopup(); else layer.eachLayer(function(f){ f.closePopup(); }); }, mouseover: highlightFeature });
+            var content = buildEnhancedPopup(feature, 'Moderate', '🟡', 'status-moderate', '#c47600');
+            layer.on('popupopen', function(e) { addClassToPopupIfMedia(content, e.popup); });
+            layer.bindPopup(content, { maxHeight: 500, maxWidth: 320 });
         }
 
         function style_Moderate_7_0() {
@@ -865,52 +709,10 @@
         bounds_group.addLayer(layer_Moderate_7);
         map.addLayer(layer_Moderate_7);
         function pop_Healthy_8(feature, layer) {
-            layer.on({
-                mouseout: function(e) {
-                    if (typeof layer.closePopup == 'function') {
-                        layer.closePopup();
-                    } else {
-                        layer.eachLayer(function(feature){
-                            feature.closePopup()
-                        });
-                    }
-                },
-                mouseover: highlightFeature,
-            });
-            var ndviValue = feature.properties['MEAN'] ? parseFloat(feature.properties['MEAN']).toFixed(4) : 'N/A';
-            var popupContent = '<div class="popup-header">✅ Healthy Status</div>' +
-                            '<table class="popup-table">' +
-                            '<tr>' +
-                            '<td>Classification:</td>' +
-                            '<td><strong>HEALTHY</strong></td>' +
-                            '</tr>' +
-                            '<tr>' +
-                            '<td>Class:</td>' +
-                            '<td>' + (feature.properties['Class'] !== null ? String(feature.properties['Class']).replace(/'/g, '\'').toLocaleString() : 'N/A') + '</td>' +
-                            '</tr>' +
-                            '<tr>' +
-                            '<td>NDVI Value:</td>' +
-                            '<td><strong style="color: #2a5c32;">' + ndviValue + '</strong></td>' +
-                            '</tr>' +
-                            '<tr>' +
-                            '<td>NDVI Class:</td>' +
-                            '<td>' + (feature.properties['NDVI_Class'] !== null ? String(feature.properties['NDVI_Class']).replace(/'/g, '\'').toLocaleString() : 'N/A') + '</td>' +
-                            '</tr>' +
-                            '<tr>' +
-                            '<td>Confidence:</td>' +
-                            '<td>' + (feature.properties['Confidence'] !== null ? String(feature.properties['Confidence']).replace(/'/g, '\'').toLocaleString() : 'N/A') + '</td>' +
-                            '</tr>' +
-                            '<tr>' +
-                            '<td>Location ID:</td>' +
-                            '<td>' + (feature.properties['OBJECTID_1'] !== null ? String(feature.properties['OBJECTID_1']).replace(/'/g, '\'').toLocaleString() : 'N/A') + '</td>' +
-                            '</tr>' +
-                            '</table>' +
-                            '<div class="popup-status status-healthy" style="margin-top: 8px;">✅ Good Condition</div>';
-            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
-			layer.on('popupopen', function(e) {
-				addClassToPopupIfMedia(content, e.popup);
-			});
-			layer.bindPopup(content, { maxHeight: 400 });
+            layer.on({ mouseout: function(e) { if (typeof layer.closePopup == 'function') layer.closePopup(); else layer.eachLayer(function(f){ f.closePopup(); }); }, mouseover: highlightFeature });
+            var content = buildEnhancedPopup(feature, 'Healthy', '✅', 'status-healthy', '#2a5c32');
+            layer.on('popupopen', function(e) { addClassToPopupIfMedia(content, e.popup); });
+            layer.bindPopup(content, { maxHeight: 500, maxWidth: 320 });
         }
 
         function style_Healthy_8_0() {
@@ -1018,6 +820,161 @@
                 return this._bounds;
             }
         });
+
+        // ═══════════════════════════════════════
+        // TREE SELECTION & COMMENTS SYSTEM
+        // ═══════════════════════════════════════
+        var selectedTrees = {};
+        var treeComments = JSON.parse(localStorage.getItem('treeComments') || '{}');
+
+        function getTreeCoords(feature) {
+            var geom = feature.geometry;
+            if (geom.type === 'Point') return {lat: geom.coordinates[1], lon: geom.coordinates[0]};
+            if (geom.type === 'Polygon' || geom.type === 'MultiPolygon') {
+                var coords = geom.type === 'Polygon' ? geom.coordinates[0] : geom.coordinates[0][0];
+                var lat = 0, lon = 0;
+                for (var i = 0; i < coords.length; i++) { lon += coords[i][0]; lat += coords[i][1]; }
+                return {lat: (lat / coords.length).toFixed(6), lon: (lon / coords.length).toFixed(6)};
+            }
+            return {lat: 'N/A', lon: 'N/A'};
+        }
+
+        function toggleTreeSelection(treeId, lat, lon, ndvi, status, comment) {
+            if (selectedTrees[treeId]) {
+                delete selectedTrees[treeId];
+            } else {
+                selectedTrees[treeId] = {id: treeId, lat: lat, lon: lon, ndvi: ndvi, status: status, comment: comment || ''};
+            }
+            updateSelectionCount();
+            var btn = document.getElementById('selBtn_' + treeId);
+            if (btn) btn.textContent = selectedTrees[treeId] ? '✓ Selected' : '☐ Select';
+            if (btn) btn.style.background = selectedTrees[treeId] ? '#3a7d44' : '#f59e0b';
+        }
+
+        function selectAllVisible() {
+            var layers = [layer_Critical_3, layer_Severs_Stress_4, layer_Mid_Stress_5, layer_Unhealthy_6, layer_Moderate_7, layer_Healthy_8];
+            var statusMap = {0:'Critical',1:'Severe Stress',2:'Mid Stress',3:'Unhealthy',4:'Moderate',5:'Healthy'};
+            layers.forEach(function(lyr, idx) {
+                if (!map.hasLayer(lyr)) return;
+                lyr.eachLayer(function(l) {
+                    var f = l.feature;
+                    if (!f) return;
+                    var id = f.properties['OBJECTID_1'] || Math.random();
+                    var c = getTreeCoords(f);
+                    var ndvi = f.properties['MEAN'] ? parseFloat(f.properties['MEAN']).toFixed(4) : 'N/A';
+                    selectedTrees[id] = {id:id, lat:c.lat, lon:c.lon, ndvi:ndvi, status:statusMap[idx], comment: treeComments[id] || ''};
+                });
+            });
+            updateSelectionCount();
+        }
+
+        function filterByHealth() {
+            var val = document.getElementById('selHealthFilter').value;
+            var layerMap = {
+                'all': [layer_Critical_3, layer_Severs_Stress_4, layer_Mid_Stress_5, layer_Unhealthy_6, layer_Moderate_7, layer_Healthy_8],
+                'healthy': [layer_Healthy_8],
+                'moderate': [layer_Moderate_7],
+                'unhealthy': [layer_Unhealthy_6],
+                'mid_stress': [layer_Mid_Stress_5],
+                'severe': [layer_Severs_Stress_4],
+                'critical': [layer_Critical_3]
+            };
+            var allLayers = [layer_Critical_3, layer_Severs_Stress_4, layer_Mid_Stress_5, layer_Unhealthy_6, layer_Moderate_7, layer_Healthy_8];
+            var show = layerMap[val] || allLayers;
+            allLayers.forEach(function(lyr) {
+                if (show.indexOf(lyr) >= 0) { if (!map.hasLayer(lyr)) map.addLayer(lyr); }
+                else { if (map.hasLayer(lyr)) map.removeLayer(lyr); }
+            });
+        }
+
+        function clearSelection() {
+            selectedTrees = {};
+            updateSelectionCount();
+            document.getElementById('selHealthFilter').value = 'all';
+            filterByHealth();
+        }
+
+        function updateSelectionCount() {
+            var count = Object.keys(selectedTrees).length;
+            document.getElementById('selCount').textContent = count + ' selected';
+        }
+
+        function saveTreeComment(treeId) {
+            var el = document.getElementById('comment_' + treeId);
+            if (el) {
+                treeComments[treeId] = el.value;
+                localStorage.setItem('treeComments', JSON.stringify(treeComments));
+                if (selectedTrees[treeId]) selectedTrees[treeId].comment = el.value;
+                var status = document.getElementById('commentStatus_' + treeId);
+                if (status) { status.textContent = '✓ Saved'; status.style.color = '#3a7d44'; setTimeout(function(){ status.textContent = ''; }, 2000); }
+            }
+        }
+
+        function exportSelectedGPX() {
+            var trees = Object.values(selectedTrees);
+            if (trees.length === 0) { alert('No trees selected. Tap trees on the map or use the filter to select.'); return; }
+            var gpx = '<?xml version="1.0" encoding="UTF-8"?>\n';
+            gpx += '<gpx version="1.1" creator="CRI NDVI Dashboard" xmlns="http://www.topografix.com/GPX/1/1">\n';
+            gpx += '  <metadata><name>Ratmalagara Selected Trees</name><time>' + new Date().toISOString() + '</time></metadata>\n';
+            trees.forEach(function(t) {
+                gpx += '  <wpt lat="' + t.lat + '" lon="' + t.lon + '">\n';
+                gpx += '    <name>Tree #' + t.id + '</name>\n';
+                gpx += '    <desc>Status: ' + t.status + ' | NDVI: ' + t.ndvi + (t.comment ? ' | Comment: ' + t.comment : '') + '</desc>\n';
+                gpx += '    <sym>' + (t.status === 'Healthy' ? 'Green Flag' : t.status === 'Moderate' ? 'Yellow Flag' : 'Red Flag') + '</sym>\n';
+                gpx += '  </wpt>\n';
+            });
+            gpx += '</gpx>';
+            var blob = new Blob([gpx], {type: 'application/gpx+xml'});
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'Ratmalagara_Trees_' + new Date().toISOString().split('T')[0] + '.gpx';
+            a.click();
+            URL.revokeObjectURL(a.href);
+        }
+
+        function exportSelectedCSV() {
+            var trees = Object.values(selectedTrees);
+            if (trees.length === 0) { alert('No trees selected. Tap trees on the map or use the filter to select.'); return; }
+            var csv = 'TreeID,Latitude,Longitude,NDVI,HealthStatus,Comment\n';
+            trees.forEach(function(t) {
+                csv += t.id + ',' + t.lat + ',' + t.lon + ',' + t.ndvi + ',"' + t.status + '","' + (t.comment || '').replace(/"/g, '""') + '"\n';
+            });
+            var blob = new Blob([csv], {type: 'text/csv'});
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'Ratmalagara_Trees_' + new Date().toISOString().split('T')[0] + '.csv';
+            a.click();
+            URL.revokeObjectURL(a.href);
+        }
+
+        function buildEnhancedPopup(feature, statusLabel, statusIcon, statusClass, ndviColor) {
+            var ndviValue = feature.properties['MEAN'] ? parseFloat(feature.properties['MEAN']).toFixed(4) : 'N/A';
+            var treeId = feature.properties['OBJECTID_1'] || 'unknown';
+            var coords = getTreeCoords(feature);
+            var existingComment = treeComments[treeId] || '';
+            var isSelected = !!selectedTrees[treeId];
+            return '<div class="popup-header">' + statusIcon + ' ' + statusLabel + '</div>' +
+                '<table class="popup-table">' +
+                '<tr><td>Classification:</td><td><strong>' + statusLabel.toUpperCase() + '</strong></td></tr>' +
+                '<tr><td>Class:</td><td>' + (feature.properties['Class'] !== null ? String(feature.properties['Class']).replace(/'/g, '\'') : 'N/A') + '</td></tr>' +
+                '<tr><td>NDVI Value:</td><td><strong style="color:' + ndviColor + ';">' + ndviValue + '</strong></td></tr>' +
+                '<tr><td>NDVI Class:</td><td>' + (feature.properties['NDVI_Class'] !== null ? String(feature.properties['NDVI_Class']).replace(/'/g, '\'') : 'N/A') + '</td></tr>' +
+                '<tr><td>Confidence:</td><td>' + (feature.properties['Confidence'] !== null ? String(feature.properties['Confidence']).replace(/'/g, '\'') : 'N/A') + '</td></tr>' +
+                '<tr><td>Location ID:</td><td>' + treeId + '</td></tr>' +
+                '<tr><td>📍 Latitude:</td><td><strong>' + coords.lat + '</strong></td></tr>' +
+                '<tr><td>📍 Longitude:</td><td><strong>' + coords.lon + '</strong></td></tr>' +
+                '</table>' +
+                '<div class="popup-status ' + statusClass + '" style="margin-top:8px;">' + statusIcon + ' ' + statusLabel + '</div>' +
+                '<div style="margin-top:10px;border-top:1px solid #eee;padding-top:8px;">' +
+                  '<label style="font-size:11px;font-weight:600;color:#555;">💬 Field Comment:</label>' +
+                  '<textarea id="comment_' + treeId + '" class="popup-comment-area" placeholder="Add field observation...">' + existingComment + '</textarea>' +
+                  '<div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;">' +
+                    '<button class="popup-comment-btn popup-save-btn" onclick="saveTreeComment(\'' + treeId + '\')">💾 Save</button>' +
+                    '<span id="commentStatus_' + treeId + '" style="font-size:10px;"></span>' +
+                    '<button id="selBtn_' + treeId + '" class="popup-comment-btn popup-select-btn" style="background:' + (isSelected ? '#3a7d44' : '#f59e0b') + ';" onclick="toggleTreeSelection(\'' + treeId + '\',' + coords.lat + ',' + coords.lon + ',\'' + ndviValue + '\',\'' + statusLabel + '\')">' + (isSelected ? '✓ Selected' : '☐ Select') + '</button>' +
+                  '</div>' +
+                '</div>';
+        }
 
         // View toggle (desktop/mobile)
         var isDesktopView = true;
