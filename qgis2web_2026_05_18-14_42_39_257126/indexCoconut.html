@@ -91,6 +91,31 @@
             color: #c0392b;
         }
 
+        /* GPS Arrow Marker */
+        .gps-arrow-marker {
+            background: none !important;
+            border: none !important;
+        }
+        .gps-pulse {
+            width: 20px; height: 20px; border-radius: 50%;
+            background: rgba(37,99,235,0.25);
+            animation: gpsPulse 2s ease-out infinite;
+            position: absolute; top: 2px; left: 2px;
+        }
+        @keyframes gpsPulse {
+            0% { transform: scale(1); opacity: 0.7; }
+            100% { transform: scale(3); opacity: 0; }
+        }
+
+        /* View toggle button */
+        .view-toggle-btn {
+            position: fixed; top: 10px; right: 10px; z-index: 1001;
+            background: white; border: 2px solid rgba(0,0,0,0.2); border-radius: 4px;
+            padding: 6px 10px; font-size: 12px; font-weight: 600; cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+        .view-toggle-btn:hover { background: #f4f4f4; }
+
         /* Interactive Legend */
         .ndvi-legend {
             background: white;
@@ -230,6 +255,7 @@
     <body>
         <div id="map">
         </div>
+        <button class="view-toggle-btn" id="viewToggle" onclick="toggleView()" title="Switch desktop/mobile view">🖥️ Desktop</button>
         <script src="js/qgis2web_expressions.js"></script>
         <script src="js/leaflet.js"></script>
         <script src="js/L.Control.Layers.Tree.min.js"></script>
@@ -326,7 +352,41 @@
         var zoomControl = L.control.zoom({
             position: 'topleft'
         }).addTo(map);
-        L.control.locate({locateOptions: {maxZoom: 19}}).addTo(map);
+        L.control.locate({
+            position: 'topleft',
+            locateOptions: {maxZoom: 19, enableHighAccuracy: true, watch: true},
+            follow: true,
+            setView: 'untilPan',
+            keepCurrentZoomLevel: true,
+            flyTo: true,
+            drawMarker: true,
+            drawCircle: true,
+            markerClass: L.marker,
+            compassClass: L.marker,
+            createButtonCallback: function(container, options) {
+                var link = L.DomUtil.create('a', 'leaflet-bar-part leaflet-bar-part-single', container);
+                link.title = 'Show my location';
+                link.href = '#';
+                link.setAttribute('role', 'button');
+                link.innerHTML = '<i class="fas fa-location-arrow"></i>';
+                return { link: link, icon: link };
+            },
+            icon: 'fas fa-location-arrow',
+            iconLoading: 'fas fa-spinner fa-spin',
+            onLocationFound: function(e) {
+                if (window._gpsArrowMarker) {
+                    map.removeLayer(window._gpsArrowMarker);
+                }
+                var heading = e.heading || 0;
+                var arrowIcon = L.divIcon({
+                    className: 'gps-arrow-marker',
+                    html: '<div style="transform:rotate(' + heading + 'deg);font-size:22px;color:#2563eb;text-shadow:0 0 6px rgba(37,99,235,0.5);">&#x25B2;</div>',
+                    iconSize: [24, 24],
+                    iconAnchor: [12, 12]
+                });
+                window._gpsArrowMarker = L.marker(e.latlng, {icon: arrowIcon, zIndexOffset: 9999}).addTo(map);
+            }
+        }).addTo(map);
         var measureControl = new L.Control.Measure({
             position: 'topleft',
             primaryLengthUnit: 'meters',
@@ -957,6 +1017,40 @@
             getBounds: function () {
                 return this._bounds;
             }
+        });
+
+        // View toggle (desktop/mobile)
+        var isDesktopView = true;
+        var originalViewport = document.querySelector('meta[name="viewport"]').getAttribute('content');
+        function toggleView() {
+            var vp = document.querySelector('meta[name="viewport"]');
+            var btn = document.getElementById('viewToggle');
+            if (isDesktopView) {
+                vp.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes');
+                btn.innerHTML = '📱 Mobile';
+            } else {
+                vp.setAttribute('content', originalViewport);
+                btn.innerHTML = '🖥️ Desktop';
+            }
+            isDesktopView = !isDesktopView;
+            setTimeout(function() { map.invalidateSize(); }, 200);
+        }
+
+        // Enhanced GPS tracking with arrow
+        map.on('locationfound', function(e) {
+            if (window._gpsArrowMarker) map.removeLayer(window._gpsArrowMarker);
+            if (window._gpsPulse) map.removeLayer(window._gpsPulse);
+            var heading = e.heading !== null && e.heading !== undefined ? e.heading : 0;
+            var arrowHtml = '<div class="gps-pulse"></div>' +
+                '<div style="position:absolute;top:0;left:0;width:24px;height:24px;display:flex;align-items:center;justify-content:center;transform:rotate(' + heading + 'deg);">' +
+                '<svg width="20" height="20" viewBox="0 0 20 20"><polygon points="10,2 16,18 10,14 4,18" fill="#2563eb" stroke="#1d4ed8" stroke-width="1"/></svg></div>';
+            var icon = L.divIcon({
+                className: 'gps-arrow-marker',
+                html: arrowHtml,
+                iconSize: [24, 24],
+                iconAnchor: [12, 12]
+            });
+            window._gpsArrowMarker = L.marker(e.latlng, {icon: icon, zIndexOffset: 9999}).addTo(map);
         });
         </script>        
     </body>

@@ -1,7 +1,7 @@
 {
-  "name": "Ratmalagara Coconut Estate Dashboard",
-  "short_name": "Coconut NDVI",
-  "description": "NDVI health monitoring dashboard for Ratmalagara Coconut Estate",
+  "name": "CRI — Ratmalagara Coconut Estate Dashboard",
+  "short_name": "CRI NDVI",
+  "description": "NDVI health monitoring dashboard for Ratmalagara Coconut Estate — Coconut Research Institute, Agronomy Division",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#faf6f0",
