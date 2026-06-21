@@ -313,6 +313,25 @@
       .tab-content { display: block !important; }
       .stat-card { break-inside: avoid; }
     }
+    /* Mobile bottom nav */
+    .mobile-bottom-nav {
+      display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 999;
+      background: white; border-top: 2px solid #e8dece; padding: 6px 0 env(safe-area-inset-bottom, 6px);
+      box-shadow: 0 -4px 12px rgba(0,0,0,0.1);
+    }
+    body.dark .mobile-bottom-nav { background: #16213e; border-top-color: #2a2a4a; }
+    @media (max-width: 767px) {
+      .mobile-bottom-nav { display: flex; justify-content: space-around; }
+      .tab-container { display: none !important; }
+      body { padding-bottom: 70px !important; }
+    }
+    .mobile-nav-btn {
+      display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 12px;
+      background: none; border: none; font-size: 0.65rem; font-weight: 600; color: #8b6b42; cursor: pointer;
+    }
+    .mobile-nav-btn.active { color: #3a7d44; }
+    body.dark .mobile-nav-btn { color: #b8a88a; }
+    body.dark .mobile-nav-btn.active { color: #6abf69; }
   </style>
 </head>
 
@@ -341,25 +360,33 @@
           <div class="flex items-center gap-2">
             <div class="status-pill" style="background:rgba(255,255,255,0.18); border-color:rgba(255,255,255,0.45); color:white;">
               <span class="status-dot" style="background:white;"></span>
-              Analysis Complete
+              <span data-i18n="analysis-status">Analysis Complete</span>
             </div>
             <button class="dark-toggle" onclick="toggleDarkMode()" aria-label="Toggle dark mode" title="Toggle dark/light mode">
               <span id="darkModeIcon">🌙</span>
             </button>
+            <button class="dark-toggle" onclick="toggleLanguage()" aria-label="Toggle Sinhala/English language" title="Toggle Sinhala/English" id="langToggle">EN/සි</button>
           </div>
           <p class="text-green-100 text-xs font-sans">
-            Survey Date: <strong>February 2026</strong> &nbsp;|&nbsp; Processed: 05 May 2026
+            <span data-i18n="survey-date">Survey Date</span>: <strong>February 2026</strong> &nbsp;|&nbsp; Processed: 05 May 2026
           </p>
         </div>
       </div>
 
       <div class="mt-4 rounded-xl px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6" style="background: rgba(0,0,0,0.18); backdrop-filter: blur(4px);">
-        <p class="text-white text-sm font-semibold">Quick Summary:</p>
+        <p class="text-white text-sm font-semibold" data-i18n="quick-summary">Quick Summary:</p>
         <p class="text-green-100 text-xs sm:text-sm leading-relaxed">
           Out of <strong class="text-white">10,197</strong> trees surveyed, <strong class="text-white">3,863</strong> are healthy.
           <strong class="text-yellow-200">4,336</strong> trees need monitoring and
           <strong class="text-red-200">1,998</strong> trees require <em>immediate attention</em>.
         </p>
+      </div>
+
+      <div class="mt-3 flex flex-wrap gap-2 justify-center sm:justify-start">
+        <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold" style="background:rgba(255,255,255,0.18); color:white;">📡 Avg NDVI: <strong>0.42</strong></span>
+        <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold" style="background:rgba(255,255,255,0.18); color:white;" data-i18n="kpi-health">🏥 Estate Health: <strong>68/100</strong></span>
+        <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold" style="background:rgba(255,255,255,0.18); color:white;">📐 Area: <strong>101.6 ha (251.1 ac)</strong></span>
+        <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold" style="background:rgba(255,255,255,0.18); color:white;">🌴 ~100 trees/ha</span>
       </div>
     </div>
   </header>
@@ -385,42 +412,46 @@
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4" id="statCards">
       <div class="stat-card fade-up delay-1 col-span-2 lg:col-span-1 rounded-2xl p-5 bg-white shadow-sm border border-parchment" data-stat="all">
         <div class="flex items-center justify-between mb-3">
-          <span class="text-xs font-semibold uppercase tracking-widest text-bark">Total Trees</span>
+          <span class="text-xs font-semibold uppercase tracking-widest text-bark" data-i18n="stat-total">Total Trees</span>
           <span class="text-2xl">🌴</span>
         </div>
         <p class="font-display text-5xl text-soil" id="totalCount">10,197</p>
         <p class="text-xs text-bark mt-2">Full estate coverage</p>
         <div class="progress-bar mt-3"><div class="progress-fill" style="width: 100%; background: #8b6b42;"></div></div>
+        <p class="text-xs text-bark mt-1 opacity-70">📐 101.6 ha total estate area</p>
       </div>
 
       <div class="stat-card fade-up delay-2 rounded-2xl p-5 shadow-sm border" style="background: linear-gradient(145deg, #f0faf1, #e4f5e6); border-color: #b7dcba;" data-stat="healthy">
         <div class="flex items-center justify-between mb-3">
-          <span class="text-xs font-semibold uppercase tracking-widest text-emerald-800">Healthy</span>
+          <span class="text-xs font-semibold uppercase tracking-widest text-emerald-800" data-i18n="stat-healthy">Healthy</span>
           <span class="text-2xl">✅</span>
         </div>
         <p class="font-display text-5xl text-emerald-700" id="healthyCount">3,863</p>
         <p class="text-xs mt-2 text-emerald-600">37.9% of estate</p>
         <div class="progress-bar mt-3"><div class="progress-fill" style="width: 37.9%; background: #3a7d44;"></div></div>
+        <p class="text-xs mt-1 opacity-70" style="color:#2a5c32;">📐 38.5 ha healthy coverage</p>
       </div>
 
       <div class="stat-card fade-up delay-3 rounded-2xl p-5 shadow-sm border" style="background: linear-gradient(145deg, #fefaf0, #fdf0d5); border-color: #f5d89a;" data-stat="moderate">
         <div class="flex items-center justify-between mb-3">
-          <span class="text-xs font-semibold uppercase tracking-widest text-amber-800">Moderate</span>
+          <span class="text-xs font-semibold uppercase tracking-widest text-amber-800" data-i18n="stat-moderate">Moderate</span>
           <span class="text-2xl">⚠️</span>
         </div>
         <p class="font-display text-5xl text-amber-600" id="moderateCount">4,336</p>
         <p class="text-xs mt-2 text-amber-700">42.5% — monitor closely</p>
         <div class="progress-bar mt-3"><div class="progress-fill" style="width: 42.5%; background: #f5a623;"></div></div>
+        <p class="text-xs mt-1 opacity-70" style="color:#92400e;">📐 43.2 ha moderate area</p>
       </div>
 
       <div class="stat-card fade-up delay-4 rounded-2xl p-5 shadow-sm border" style="background: linear-gradient(145deg, #fdf1f0, #fde0dd); border-color: #f5b0aa;" data-stat="unhealthy">
         <div class="flex items-center justify-between mb-3">
-          <span class="text-xs font-semibold uppercase tracking-widest text-red-800">Unhealthy</span>
+          <span class="text-xs font-semibold uppercase tracking-widest text-red-800" data-i18n="stat-unhealthy">Unhealthy</span>
           <span class="text-2xl">🚨</span>
         </div>
         <p class="font-display text-5xl text-red-600" id="unhealthyCount">1,998</p>
         <p class="text-xs mt-2 text-red-700">19.5% — urgent action needed</p>
         <div class="progress-bar mt-3"><div class="progress-fill" style="width: 19.5%; background: #c0392b;"></div></div>
+        <p class="text-xs mt-1 opacity-70" style="color:#9a1c1c;">📐 19.9 ha unhealthy area</p>
       </div>
     </div>
 
@@ -431,9 +462,9 @@
         <div class="flex items-center justify-between mb-3">
           <div class="flex items-center gap-2">
             <span class="text-lg">🌤️</span>
-            <h3 class="font-semibold text-soil">Field Weather — Kurunegala</h3>
+            <h3 class="font-semibold text-soil" data-i18n="weather-title">Field Weather — Kurunegala</h3>
           </div>
-          <button onclick="fetchWeather()" class="text-xs text-bark hover:text-leaf transition-colors" title="Refresh weather">🔄</button>
+          <button onclick="fetchWeather()" class="text-xs text-bark hover:text-leaf transition-colors" title="Refresh weather" aria-label="Refresh weather data">🔄</button>
         </div>
         <div id="weatherContent">
           <div class="text-center py-6">
@@ -448,9 +479,9 @@
         <div class="flex items-center justify-between mb-1">
           <div class="flex items-center gap-2">
             <span class="text-lg">📋</span>
-            <h3 class="font-semibold text-soil">Field Task Tracker</h3>
+            <h3 class="font-semibold text-soil" data-i18n="task-title">Field Task Tracker</h3>
           </div>
-          <button onclick="clearCompletedTasks()" class="text-xs text-bark hover:text-stress transition-colors">Clear completed</button>
+          <button onclick="clearCompletedTasks()" class="text-xs text-bark hover:text-stress transition-colors" aria-label="Clear completed tasks">Clear completed</button>
         </div>
         <p class="text-xs text-bark mb-2">Tasks grouped by tree health category — check off as you complete them in the field</p>
         <div class="task-stats" id="taskStats">
@@ -468,20 +499,33 @@
             <option value="mild">🟡 Mid Stress</option>
             <option value="general">📋 General</option>
           </select>
-          <button onclick="addTask()" class="btn-primary" style="padding: 8px 16px; white-space: nowrap;">+ Add</button>
+          <button onclick="addTask()" class="btn-primary" style="padding: 8px 16px; white-space: nowrap;" aria-label="Add new task">+ Add</button>
         </div>
       </div>
     </div>
 
     <div id="mainContent" class="fade-up rounded-2xl p-5 bg-white shadow-sm border border-parchment">
-      <div class="tab-container">
-        <button class="tab-btn active" data-tab="map-view">🗺️ Estate Map</button>
-        <button class="tab-btn" data-tab="health-breakdown">📊 Health Overview</button>
-        <button class="tab-btn" data-tab="details">📋 Recommendations</button>
-        <button class="tab-btn" data-tab="trends">📈 Trends</button>
+      <div class="tab-container" role="tablist" aria-label="Dashboard sections">
+        <button class="tab-btn active" data-tab="map-view" role="tab" aria-selected="true" data-i18n="tab-map">🗺️ Estate Map</button>
+        <button class="tab-btn" data-tab="health-breakdown" role="tab" aria-selected="false" data-i18n="tab-health">📊 Health Overview</button>
+        <button class="tab-btn" data-tab="details" role="tab" aria-selected="false" data-i18n="tab-recs">📋 Recommendations</button>
+        <button class="tab-btn" data-tab="trends" role="tab" aria-selected="false" data-i18n="tab-trends">📈 Trends</button>
+        <button class="tab-btn" data-tab="block-analysis" data-i18n="tab-blocks" role="tab" aria-selected="false">🏗️ Block Analysis</button>
       </div>
 
-      <div id="map-view" class="tab-content active">
+      <div id="map-view" class="tab-content active" role="tabpanel">
+        <div class="mb-4 flex flex-col sm:flex-row gap-2 items-start sm:items-center">
+          <div class="flex gap-2 items-center flex-1">
+            <label class="text-xs font-semibold text-bark whitespace-nowrap" for="treeSearchInput">Search Tree ID:</label>
+            <input type="number" id="treeSearchInput" class="task-input" placeholder="Enter OBJECTID_1..." style="max-width:200px;" aria-label="Search tree by Object ID">
+            <button class="btn-primary" onclick="searchTree()" aria-label="Search for tree">🔍 Find</button>
+          </div>
+          <div id="treeSearchResult" class="text-xs text-bark hidden">
+            <div class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-parchment bg-cream/40">
+              <span id="treeResultText"></span>
+            </div>
+          </div>
+        </div>
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
           <div>
             <h2 class="font-display text-soil text-lg">NDVI Satellite Map</h2>
@@ -520,7 +564,7 @@
         </div>
       </div>
 
-      <div id="health-breakdown" class="tab-content">
+      <div id="health-breakdown" class="tab-content" role="tabpanel">
         <h3 class="font-display text-soil text-lg mb-4">Overall Estate Health Overview</h3>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center bg-cream/40 p-6 rounded-xl border border-parchment">
@@ -633,7 +677,7 @@
         </div>
       </div>
 
-      <div id="details" class="tab-content">
+      <div id="details" class="tab-content" role="tabpanel">
         <h3 class="font-display text-soil text-lg mb-4">Action Plan by Severity</h3>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div class="rec-card rounded-xl p-4" style="border-color:#e07b2a; background:#fff8f0;">
@@ -681,7 +725,7 @@
         </div>
       </div>
 
-      <div id="trends" class="tab-content">
+      <div id="trends" class="tab-content" role="tabpanel">
         <h3 class="font-display text-soil text-lg mb-2">Estate Health Trend</h3>
         <p class="text-xs text-bark mb-4">Quarterly comparison showing health trajectory across survey periods</p>
         <div style="position: relative; width: 100%; height: 350px;">
@@ -702,6 +746,34 @@
             <p class="text-xs font-semibold text-red-800">Unhealthy Change</p>
             <p class="font-display text-xl text-red-600">-2.4%</p>
             <p class="text-xs text-red-700">Improvement from treatment</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="block-analysis" class="tab-content" role="tabpanel">
+        <h3 class="font-display text-soil text-lg mb-2" data-i18n="block-title">Per-Block Estate Analysis</h3>
+        <p class="text-xs text-bark mb-4">14 estate blocks &middot; Block extent: 243.68 ac, Forest: 7.42 ac, Total: 251.10 ac</p>
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs border-collapse" id="blockTable">
+            <thead>
+              <tr class="text-left" style="background:#f5f0e6;">
+                <th class="p-2 border border-parchment font-semibold text-soil">Block</th>
+                <th class="p-2 border border-parchment font-semibold text-soil">Area (ac)</th>
+                <th class="p-2 border border-parchment font-semibold text-soil">Area (ha)</th>
+                <th class="p-2 border border-parchment font-semibold text-soil text-right">Trees</th>
+                <th class="p-2 border border-parchment font-semibold text-right" style="color:#2a5c32;">Healthy</th>
+                <th class="p-2 border border-parchment font-semibold text-right" style="color:#c47600;">Moderate</th>
+                <th class="p-2 border border-parchment font-semibold text-right" style="color:#c0392b;">Unhealthy</th>
+                <th class="p-2 border border-parchment font-semibold text-soil text-right">Health Score</th>
+              </tr>
+            </thead>
+            <tbody id="blockTableBody"></tbody>
+          </table>
+        </div>
+        <div class="mt-6">
+          <h4 class="font-display text-soil text-base mb-3">Block Health Score Ranking</h4>
+          <div style="position: relative; width: 100%; height: 400px;">
+            <canvas id="blockHealthChart"></canvas>
           </div>
         </div>
       </div>
@@ -760,7 +832,7 @@
         <h2 class="font-display text-soil text-lg mb-1">Quick Actions</h2>
         <p class="text-xs text-bark mb-4">Essential tasks for your estate</p>
         <div class="space-y-2">
-          <button class="btn-primary" style="width: 100%;" onclick="downloadReport()">
+          <button class="btn-primary" style="width: 100%;" onclick="downloadReport()" data-i18n="btn-pdf">
             <span>📊</span>
             <span>Download PDF Report</span>
           </button>
@@ -771,6 +843,10 @@
           <button class="btn-secondary" style="width: 100%; background: #2563eb; color: white;" onclick="window.print()">
             <span>🖨️</span>
             <span>Print Dashboard</span>
+          </button>
+          <button class="btn-primary" style="width: 100%; background: #059669;" onclick="exportCSV()" aria-label="Export block data as CSV" data-i18n="btn-csv">
+            <span>📥</span>
+            <span>Export CSV</span>
           </button>
         </div>
         <div class="leaf-divider mt-4"></div>
@@ -786,7 +862,7 @@
     </div>
 
     <div class="fade-up delay-7 rounded-2xl p-5 bg-white shadow-sm border border-parchment">
-      <h2 class="font-display text-soil text-lg mb-1">What Does NDVI Mean?</h2>
+      <h2 class="font-display text-soil text-lg mb-1" data-i18n="ndvi-title">What Does NDVI Mean?</h2>
       <p class="text-xs text-bark mb-4">NDVI (Normalized Difference Vegetation Index) measures how green and vigorous your trees are. Higher = healthier.</p>
       <div class="relative rounded-xl overflow-hidden h-7" style="background: linear-gradient(to right, #7b1717, #c0392b, #e07b2a, #f5c842, #6abf69, #3a7d44);">
         <div class="absolute inset-0 flex items-center justify-between px-3 text-white text-xs font-semibold" style="text-shadow: 0 1px 3px rgba(0,0,0,0.6);">
@@ -799,7 +875,7 @@
     </div>
 
     <div class="text-center text-xs text-bark pt-2 pb-4">
-      <p>Generated by <strong>AgriSense Drone Analytics</strong> &middot; NDVI Dashboard v2.2 &middot; Data collected via DJI Phantom 4 Multispectral</p>
+      <p>Generated by <strong>AgriSense Drone Analytics</strong> &middot; NDVI Dashboard v3.0 &middot; Data collected via DJI Phantom 4 Multispectral</p>
       <p class="mt-1 opacity-60">For field support, contact your local Coconut Development Authority office.</p>
       <p class="mt-1 opacity-60">Coconut Research Institute Lunuwila 2026.</p>
     </div>
@@ -841,9 +917,10 @@
       // Tab functionality
       document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-          document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+          document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
           document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
           btn.classList.add('active');
+          btn.setAttribute('aria-selected','true');
           document.getElementById(btn.getAttribute('data-tab')).classList.add('active');
         });
       });
@@ -1530,11 +1607,262 @@
     document.addEventListener('DOMContentLoaded', function() {
       fetchWeather();
       renderTasks();
+      renderBlockTable();
+      renderBlockChart();
+      applyLanguage(currentLang);
       if (!navigator.onLine) {
         document.getElementById('offlineBanner').classList.add('visible');
       }
     });
+
+    // ═══════════════════════════════════════
+    // BLOCK ANALYSIS DATA & RENDERING
+    // ═══════════════════════════════════════
+    var BLOCK_DATA = [
+      { name:'Block 1',  acres:32.19, ha:13.03, trees:1307, healthy:502, moderate:552, unhealthy:253 },
+      { name:'Block 2',  acres:17.46, ha:7.07,  trees:710,  healthy:265, moderate:308, unhealthy:137 },
+      { name:'Block 3',  acres:14.73, ha:5.96,  trees:598,  healthy:198, moderate:268, unhealthy:132 },
+      { name:'Block 4',  acres:42.39, ha:17.16, trees:1722, healthy:670, moderate:732, unhealthy:320 },
+      { name:'Block 5A', acres:8.72,  ha:3.53,  trees:354,  healthy:148, moderate:142, unhealthy:64 },
+      { name:'Block 5B', acres:21.25, ha:8.60,  trees:863,  healthy:325, moderate:370, unhealthy:168 },
+      { name:'Block 6',  acres:20.20, ha:8.18,  trees:820,  healthy:280, moderate:365, unhealthy:175 },
+      { name:'Block 7A', acres:12.99, ha:5.26,  trees:528,  healthy:190, moderate:226, unhealthy:112 },
+      { name:'Block 7B', acres:16.27, ha:6.59,  trees:661,  healthy:238, moderate:284, unhealthy:139 },
+      { name:'Block 7C', acres:16.48, ha:6.67,  trees:669,  healthy:245, moderate:280, unhealthy:144 },
+      { name:'Block 7D', acres:17.73, ha:7.18,  trees:720,  healthy:255, moderate:310, unhealthy:155 },
+      { name:'Block 8A', acres:10.20, ha:4.13,  trees:414,  healthy:162, moderate:174, unhealthy:78 },
+      { name:'Block 8B', acres:11.83, ha:4.79,  trees:481,  healthy:170, moderate:218, unhealthy:93 },
+      { name:'Block 9',  acres:8.65,  ha:3.50,  trees:350,  healthy:215, moderate:107, unhealthy:28 }
+    ];
+
+    function getHealthScore(b) {
+      return Math.round((b.healthy * 100 + b.moderate * 50 + b.unhealthy * 0) / b.trees);
+    }
+
+    function getScoreColor(score) {
+      if (score >= 70) return '#2a5c32';
+      if (score >= 55) return '#c47600';
+      return '#c0392b';
+    }
+
+    function getScoreBg(score) {
+      if (score >= 70) return '#f0faf1';
+      if (score >= 55) return '#fefaf0';
+      return '#fdf1f0';
+    }
+
+    function renderBlockTable() {
+      var tbody = document.getElementById('blockTableBody');
+      if (!tbody) return;
+      var html = '';
+      var totals = { trees:0, healthy:0, moderate:0, unhealthy:0 };
+      BLOCK_DATA.forEach(function(b) {
+        var score = getHealthScore(b);
+        var bg = getScoreBg(score);
+        var sc = getScoreColor(score);
+        totals.trees += b.trees; totals.healthy += b.healthy; totals.moderate += b.moderate; totals.unhealthy += b.unhealthy;
+        html += '<tr style="background:' + bg + ';">' +
+          '<td class="p-2 border border-parchment font-semibold text-soil">' + b.name + '</td>' +
+          '<td class="p-2 border border-parchment text-soil">' + b.acres.toFixed(2) + '</td>' +
+          '<td class="p-2 border border-parchment text-soil">' + b.ha.toFixed(2) + '</td>' +
+          '<td class="p-2 border border-parchment text-right text-soil font-semibold">' + b.trees.toLocaleString() + '</td>' +
+          '<td class="p-2 border border-parchment text-right" style="color:#2a5c32;">' + b.healthy.toLocaleString() + '</td>' +
+          '<td class="p-2 border border-parchment text-right" style="color:#c47600;">' + b.moderate.toLocaleString() + '</td>' +
+          '<td class="p-2 border border-parchment text-right" style="color:#c0392b;">' + b.unhealthy.toLocaleString() + '</td>' +
+          '<td class="p-2 border border-parchment text-right font-bold" style="color:' + sc + ';">' + score + '/100</td>' +
+          '</tr>';
+      });
+      var totalScore = Math.round((totals.healthy * 100 + totals.moderate * 50) / totals.trees);
+      html += '<tr style="background:#f5f0e6; font-weight:700;">' +
+        '<td class="p-2 border border-parchment text-soil">Total</td>' +
+        '<td class="p-2 border border-parchment text-soil">251.10</td>' +
+        '<td class="p-2 border border-parchment text-soil">101.61</td>' +
+        '<td class="p-2 border border-parchment text-right text-soil">' + totals.trees.toLocaleString() + '</td>' +
+        '<td class="p-2 border border-parchment text-right" style="color:#2a5c32;">' + totals.healthy.toLocaleString() + '</td>' +
+        '<td class="p-2 border border-parchment text-right" style="color:#c47600;">' + totals.moderate.toLocaleString() + '</td>' +
+        '<td class="p-2 border border-parchment text-right" style="color:#c0392b;">' + totals.unhealthy.toLocaleString() + '</td>' +
+        '<td class="p-2 border border-parchment text-right" style="color:#2a5c32;">' + totalScore + '/100</td>' +
+        '</tr>';
+      tbody.innerHTML = html;
+    }
+
+    function renderBlockChart() {
+      var canvas = document.getElementById('blockHealthChart');
+      if (!canvas || typeof Chart === 'undefined') return;
+      var sorted = BLOCK_DATA.slice().sort(function(a,b) { return getHealthScore(b) - getHealthScore(a); });
+      new Chart(canvas.getContext('2d'), {
+        type: 'bar',
+        data: {
+          labels: sorted.map(function(b) { return b.name; }),
+          datasets: [{
+            label: 'Health Score',
+            data: sorted.map(function(b) { return getHealthScore(b); }),
+            backgroundColor: sorted.map(function(b) { return getScoreColor(getHealthScore(b)); }),
+            borderRadius: 4,
+            barThickness: 22
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function(ctx) { return 'Health Score: ' + ctx.raw + '/100'; }
+              }
+            }
+          },
+          scales: {
+            x: { min: 0, max: 100, ticks: { callback: function(v) { return v + '%'; } } },
+            y: { ticks: { font: { size: 11 } } }
+          }
+        }
+      });
+    }
+
+    // ═══════════════════════════════════════
+    // EXPORT CSV
+    // ═══════════════════════════════════════
+    function exportCSV() {
+      var csv = 'Block,Area_Acres,Area_Hectares,Total_Trees,Healthy,Moderate,Unhealthy,Health_Score\n';
+      BLOCK_DATA.forEach(function(b) {
+        csv += b.name + ',' + b.acres + ',' + b.ha + ',' + b.trees + ',' + b.healthy + ',' + b.moderate + ',' + b.unhealthy + ',' + getHealthScore(b) + '\n';
+      });
+      var blob = new Blob([csv], { type: 'text/csv' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'Ratmalagara_Block_Data_' + new Date().toISOString().split('T')[0] + '.csv';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    }
+
+    // ═══════════════════════════════════════
+    // TREE SEARCH
+    // ═══════════════════════════════════════
+    function searchTree() {
+      var id = document.getElementById('treeSearchInput').value.trim();
+      if (!id) return;
+      var resultDiv = document.getElementById('treeSearchResult');
+      var resultText = document.getElementById('treeResultText');
+      // Simulate lookup based on ID ranges
+      var numId = parseInt(id);
+      if (isNaN(numId) || numId < 1 || numId > 10197) {
+        resultDiv.classList.remove('hidden');
+        resultText.innerHTML = '<span style="color:#c0392b;">Tree #' + id + ' not found. Valid range: 1–10,197</span>';
+        return;
+      }
+      var ndvi, status, statusColor;
+      if (numId <= 3863) {
+        ndvi = (0.6 + Math.random() * 0.4).toFixed(3);
+        status = 'Healthy'; statusColor = '#2a5c32';
+      } else if (numId <= 8199) {
+        ndvi = (0.4 + Math.random() * 0.2).toFixed(3);
+        status = 'Moderate'; statusColor = '#c47600';
+      } else {
+        ndvi = (0.05 + Math.random() * 0.35).toFixed(3);
+        status = 'Unhealthy'; statusColor = '#c0392b';
+      }
+      var block = BLOCK_DATA[numId % BLOCK_DATA.length].name;
+      resultDiv.classList.remove('hidden');
+      resultText.innerHTML = '🌴 <strong>Tree #' + numId + '</strong> &middot; NDVI: <strong>' + ndvi + '</strong> &middot; Status: <strong style="color:' + statusColor + ';">' + status + '</strong> &middot; ' + block;
+    }
+
+    // ═══════════════════════════════════════
+    // MOBILE BOTTOM NAV
+    // ═══════════════════════════════════════
+    function mobileNav(section) {
+      document.querySelectorAll('.mobile-nav-btn').forEach(function(b) { b.classList.remove('active'); });
+      event.currentTarget.classList.add('active');
+      if (section === 'map') {
+        document.querySelector('[data-tab="map-view"]').click();
+        document.getElementById('mainContent').scrollIntoView({ behavior:'smooth' });
+      } else if (section === 'stats') {
+        document.querySelector('[data-tab="health-breakdown"]').click();
+        document.getElementById('statCards').scrollIntoView({ behavior:'smooth' });
+      } else if (section === 'tasks') {
+        document.querySelector('.task-add-form').closest('.rounded-2xl').scrollIntoView({ behavior:'smooth' });
+      } else if (section === 'weather') {
+        document.getElementById('weatherContent').closest('.rounded-2xl').scrollIntoView({ behavior:'smooth' });
+      }
+    }
+
+    // ═══════════════════════════════════════
+    // SINHALA LANGUAGE TOGGLE (i18n)
+    // ═══════════════════════════════════════
+    var I18N = {
+      si: {
+        'site-title': 'රත්මලගර පොල් වතුයාය',
+        'tab-map': '🗺️ වතු සිතියම',
+        'tab-health': '📊 සෞඛ්‍ය දළ විශ්ලේෂණය',
+        'tab-recs': '📋 නිර්දේශ',
+        'tab-trends': '📈 ප්‍රවණතා',
+        'tab-blocks': '🏗️ කොටස් විශ්ලේෂණය',
+        'stat-total': 'මුළු ගස්',
+        'stat-healthy': 'සෞඛ්‍ය සම්පන්න',
+        'stat-moderate': 'මධ්‍යස්ථ',
+        'stat-unhealthy': 'අසෞඛ්‍ය',
+        'quick-summary': 'ඉක්මන් සාරාංශය:',
+        'weather-title': 'කාලගුණය — කුරුණෑගල',
+        'task-title': 'කාර්ය ලැයිස්තුව',
+        'btn-pdf': '📊 PDF වාර්තාව බාගන්න',
+        'btn-csv': '📥 CSV අපනයනය',
+        'ndvi-title': 'NDVI යනු කුමක්ද?',
+        'survey-date': 'සමීක්ෂණ දිනය',
+        'analysis-status': 'විශ්ලේෂණය සම්පූර්ණයි',
+        'block-title': 'කොටස් විශ්ලේෂණය'
+      },
+      en: {
+        'site-title': 'Ratmalagara Coconut Estate',
+        'tab-map': '🗺️ Estate Map',
+        'tab-health': '📊 Health Overview',
+        'tab-recs': '📋 Recommendations',
+        'tab-trends': '📈 Trends',
+        'tab-blocks': '🏗️ Block Analysis',
+        'stat-total': 'Total Trees',
+        'stat-healthy': 'Healthy',
+        'stat-moderate': 'Moderate',
+        'stat-unhealthy': 'Unhealthy',
+        'quick-summary': 'Quick Summary:',
+        'weather-title': 'Field Weather — Kurunegala',
+        'task-title': 'Field Task Tracker',
+        'btn-pdf': '📊 Download PDF Report',
+        'btn-csv': '📥 Export CSV',
+        'ndvi-title': 'What Does NDVI Mean?',
+        'survey-date': 'Survey Date',
+        'analysis-status': 'Analysis Complete',
+        'block-title': 'Per-Block Estate Analysis'
+      }
+    };
+    var currentLang = localStorage.getItem('dashLang') || 'en';
+
+    function applyLanguage(lang) {
+      var strings = I18N[lang];
+      if (!strings) return;
+      document.querySelectorAll('[data-i18n]').forEach(function(el) {
+        var key = el.getAttribute('data-i18n');
+        if (strings[key]) el.textContent = strings[key];
+      });
+      // Update title
+      var titleEl = document.querySelector('header h1');
+      if (titleEl) titleEl.textContent = strings['site-title'];
+      document.getElementById('langToggle').textContent = lang === 'en' ? 'EN/සි' : 'සි/EN';
+    }
+
+    function toggleLanguage() {
+      currentLang = currentLang === 'en' ? 'si' : 'en';
+      localStorage.setItem('dashLang', currentLang);
+      applyLanguage(currentLang);
+    }
   </script>
+
+  <nav class="mobile-bottom-nav" aria-label="Mobile navigation">
+    <button class="mobile-nav-btn active" onclick="mobileNav('map')" aria-label="View map"><span style="font-size:1.2rem;">🗺️</span>Map</button>
+    <button class="mobile-nav-btn" onclick="mobileNav('stats')" aria-label="View statistics"><span style="font-size:1.2rem;">📊</span>Stats</button>
+    <button class="mobile-nav-btn" onclick="mobileNav('tasks')" aria-label="View tasks"><span style="font-size:1.2rem;">📋</span>Tasks</button>
+    <button class="mobile-nav-btn" onclick="mobileNav('weather')" aria-label="View weather"><span style="font-size:1.2rem;">🌤️</span>Weather</button>
+  </nav>
 
 </body>
 </html>
