@@ -1,12 +1,12 @@
-var CACHE_NAME = 'coconut-dashboard-v5.0';
+var CACHE_NAME = 'coconut-dashboard-v2.1';
 var ASSETS = [
   './',
   './index.html',
   './icon.svg',
   './icon-192.png',
   './icon-512.png',
-  './logo-cri.svg',
-  './logo-agronomy.svg',
+  './logo-cri.png',
+  './logo-agronomy.png',
   './manifest.webmanifest',
   './qgis2web_2026_05_18-14_42_39_257126/indexCoconut.html',
   './qgis2web_2026_05_18-14_42_39_257126/css/leaflet.css',
