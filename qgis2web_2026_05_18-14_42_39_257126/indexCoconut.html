@@ -91,6 +91,32 @@
             color: #c0392b;
         }
 
+        /* Block boundary labels */
+        .block-label {
+            background: none;
+            border: none;
+            font-size: 11px;
+            font-weight: 700;
+            color: #fff;
+            text-shadow: 0 0 4px rgba(0,0,0,0.8), 0 0 2px rgba(0,0,0,0.9);
+            white-space: nowrap;
+            pointer-events: none;
+        }
+
+        /* Location marker icons */
+        .location-marker {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            color: #fff;
+            font-size: 13px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+            border: 2px solid #fff;
+        }
+
         /* Interactive Legend */
         .ndvi-legend {
             background: white;
@@ -243,6 +269,8 @@
         <script src="js/labels.js"></script>
         <script src="js/leaflet.photon.js"></script>
         <script src="js/leaflet-measure.js"></script>
+        <script src="data/BlockBoundaries.js"></script>
+        <script src="data/Locations.js"></script>
         <script src="data/Boundary_2.js"></script>
         <script src="data/Critical_3.js"></script>
         <script src="data/Severs_Stress_4.js"></script>
@@ -882,7 +910,86 @@
         });
         bounds_group.addLayer(layer_Healthy_8);
         map.addLayer(layer_Healthy_8);
+        // Block Boundaries layer
+        var blockColors = {
+            'Block 1':'#e6194b','Block 2':'#3cb44b','Block 3':'#ffe119','Block 4':'#4363d8',
+            'Block 5A':'#f58231','Block 5B':'#911eb4','Block 6':'#42d4f4','Block 7A':'#f032e6',
+            'Block 7B':'#bfef45','Block 7C':'#fabed4','Block 7D':'#469990',
+            'Block 8A':'#dcbeff','Block 8B':'#9A6324','Block 9':'#800000'
+        };
+        map.createPane('pane_BlockBoundaries');
+        map.getPane('pane_BlockBoundaries').style.zIndex = 409;
+        var layer_BlockBoundaries = new L.geoJson(json_BlockBoundaries, {
+            pane: 'pane_BlockBoundaries',
+            interactive: true,
+            style: function(feature) {
+                return {
+                    color: blockColors[feature.properties.Block] || '#ffffff',
+                    weight: 2.5,
+                    opacity: 1,
+                    fillOpacity: 0.10,
+                    fillColor: blockColors[feature.properties.Block] || '#ffffff',
+                    dashArray: '6 3'
+                };
+            },
+            onEachFeature: function(feature, layer) {
+                var p = feature.properties;
+                var popupContent = '<div class="popup-header">' + p.Block + '</div>' +
+                    '<table class="popup-table">' +
+                    '<tr><td>Acreage:</td><td><strong>' + p.Acres + ' ac</strong> (' + p.Ha + ' ha)</td></tr>' +
+                    '<tr><td>Note:</td><td>' + (p.Note || '') + '</td></tr>' +
+                    '</table>';
+                layer.bindPopup(popupContent, { maxHeight: 400 });
+                // Add label at centroid
+                var bounds = layer.getBounds();
+                var center = bounds.getCenter();
+                var label = L.marker(center, {
+                    icon: L.divIcon({
+                        className: 'block-label',
+                        html: p.Block,
+                        iconSize: [60, 14],
+                        iconAnchor: [30, 7]
+                    }),
+                    pane: 'pane_BlockBoundaries',
+                    interactive: false
+                });
+                layer_BlockBoundaries.addLayer(label);
+            }
+        });
+        bounds_group.addLayer(layer_BlockBoundaries);
+        map.addLayer(layer_BlockBoundaries);
+
+        // Important Locations layer
+        map.createPane('pane_Locations');
+        map.getPane('pane_Locations').style.zIndex = 410;
+        var layer_Locations = new L.geoJson(json_Locations, {
+            pane: 'pane_Locations',
+            pointToLayer: function(feature, latlng) {
+                var p = feature.properties;
+                var icon = L.divIcon({
+                    className: '',
+                    html: '<div class="location-marker" style="background:' + p.Color + '"><i class="fas ' + p.Icon + '"></i></div>',
+                    iconSize: [28, 28],
+                    iconAnchor: [14, 14],
+                    popupAnchor: [0, -16]
+                });
+                return L.marker(latlng, { icon: icon, pane: 'pane_Locations' });
+            },
+            onEachFeature: function(feature, layer) {
+                var p = feature.properties;
+                var popupContent = '<div class="popup-header">' + p.Name + '</div>' +
+                    '<table class="popup-table">' +
+                    '<tr><td>Type:</td><td>' + p.Type + '</td></tr>' +
+                    '</table>';
+                layer.bindPopup(popupContent, { maxHeight: 400 });
+            }
+        });
+        bounds_group.addLayer(layer_Locations);
+        map.addLayer(layer_Locations);
+
         var overlaysTree = [
+            {label: '<i class="fas fa-map-marker-alt" style="color:#c47600"></i> Important Locations', layer: layer_Locations},
+            {label: '<i class="fas fa-th-large" style="color:#4363d8"></i> Block Boundaries', layer: layer_BlockBoundaries},
             {label: '<img src="legend/Healthy_8.png" /> Healthy', layer: layer_Healthy_8},
             {label: '<img src="legend/Moderate_7.png" /> Moderate', layer: layer_Moderate_7},
             {label: '<img src="legend/Unhealthy_6.png" /> Unhealthy', layer: layer_Unhealthy_6},
