@@ -5,6 +5,8 @@ var ASSETS = [
   './icon.svg',
   './icon-192.png',
   './icon-512.png',
+  './logo-cri.svg',
+  './logo-agronomy.svg',
   './manifest.webmanifest',
   './qgis2web_2026_05_18-14_42_39_257126/indexCoconut.html',
   './qgis2web_2026_05_18-14_42_39_257126/css/leaflet.css',
