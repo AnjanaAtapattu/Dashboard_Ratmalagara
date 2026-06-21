@@ -109,7 +109,6 @@
 
         /* View toggle button */
         .view-toggle-btn {
-            position: fixed; top: 10px; right: 10px; z-index: 1001;
             background: white; border: 2px solid rgba(0,0,0,0.2); border-radius: 4px;
             padding: 6px 10px; font-size: 12px; font-weight: 600; cursor: pointer;
             box-shadow: 0 2px 6px rgba(0,0,0,0.2);
@@ -153,6 +152,21 @@
         .popup-coord-btn:hover { background: #1d4ed8; }
         .popup-select-btn { background: #f59e0b; color: white; margin-left: 4px; }
         .popup-select-btn:hover { background: #d97706; }
+
+        /* Dark mode (#13) */
+        body.dark-map { background: #1a1a2e; }
+        body.dark-map .selection-toolbar { background: #16213e; color: #e0d6c8; border: 1px solid #2a2a4a; }
+        body.dark-map .sel-btn { background: #1a1a2e; color: #e0d6c8; border-color: #2a2a4a; }
+        body.dark-map .sel-btn:hover { background: #2a2a4a; }
+        body.dark-map .ndvi-legend { background: #16213e; color: #e0d6c8; }
+        body.dark-map .ndvi-legend h3 { color: #e0d6c8; }
+        body.dark-map .legend-label { color: #e0d6c8; }
+        body.dark-map .legend-count { color: #b8a88a; }
+        body.dark-map .legend-item:hover { background-color: #1a2a4a; }
+        body.dark-map .view-toggle-btn { background: #16213e; color: #e0d6c8; border-color: #2a2a4a; }
+
+        /* Photo preview in popup (#11) */
+        .popup-photo-preview { max-width: 100%; max-height: 120px; border-radius: 6px; margin-top: 6px; border: 1px solid #ddd; }
 
         /* Interactive Legend */
         .ndvi-legend {
@@ -293,10 +307,13 @@
     <body>
         <div id="map">
         </div>
-        <button class="view-toggle-btn" id="viewToggle" onclick="toggleView()" title="Switch desktop/mobile view">🖥️ Desktop</button>
+        <div style="position:fixed;top:10px;right:10px;z-index:1001;display:flex;gap:6px;">
+          <button class="view-toggle-btn" id="viewToggle" onclick="toggleView()" title="Switch desktop/mobile view" style="position:static;">🖥️ Desktop</button>
+          <button class="view-toggle-btn" id="darkToggleMap" onclick="toggleMapDarkMode()" title="Toggle dark mode" style="position:static;">🌙</button>
+        </div>
         <div class="selection-toolbar" id="selToolbar">
           <span style="font-weight:700;font-size:12px;">Filter:</span>
-          <select id="selHealthFilter" class="sel-btn" onchange="filterByHealth()" style="padding:4px 6px;">
+          <select id="selHealthFilter" class="sel-btn" onchange="filterByHealth()" style="padding:4px 6px;" aria-label="Filter by health status">
             <option value="all">All Health</option>
             <option value="healthy">Healthy</option>
             <option value="moderate">Moderate</option>
@@ -305,9 +322,13 @@
             <option value="severe">Severe Stress</option>
             <option value="critical">Critical</option>
           </select>
+          <select id="selBlockFilter" class="sel-btn" onchange="filterByBlock()" style="padding:4px 6px;" aria-label="Filter by block">
+            <option value="all">All Blocks</option>
+          </select>
           <span class="sel-count" id="selCount">0 selected</span>
-          <button class="sel-btn sel-export" onclick="exportSelectedGPX()" title="Export to GPX for handheld GPS">📍 Export GPX</button>
-          <button class="sel-btn sel-export" onclick="exportSelectedCSV()" title="Export to CSV/Excel" style="background:#059669;border-color:#059669;">📊 Export CSV</button>
+          <button class="sel-btn sel-export" onclick="exportSelectedGPX()" title="Export to GPX for handheld GPS">📍 GPX</button>
+          <button class="sel-btn sel-export" onclick="exportSelectedCSV()" title="Export to CSV/Excel" style="background:#059669;border-color:#059669;">📊 CSV</button>
+          <button class="sel-btn" onclick="selectAllVisible()" title="Select all visible trees" style="background:#6366f1;color:white;border-color:#6366f1;">☑ Select All</button>
           <button class="sel-btn sel-clear" onclick="clearSelection()">✕ Clear</button>
         </div>
         <script src="js/qgis2web_expressions.js"></script>
@@ -826,6 +847,7 @@
         // ═══════════════════════════════════════
         var selectedTrees = {};
         var treeComments = JSON.parse(localStorage.getItem('treeComments') || '{}');
+        var treePhotos = JSON.parse(localStorage.getItem('treePhotos') || '{}');
 
         function getTreeCoords(feature) {
             var geom = feature.geometry;
@@ -953,6 +975,8 @@
             var coords = getTreeCoords(feature);
             var existingComment = treeComments[treeId] || '';
             var isSelected = !!selectedTrees[treeId];
+            var existingPhoto = treePhotos[treeId] || '';
+            var blockName = getTreeBlock(coords) || '';
             return '<div class="popup-header">' + statusIcon + ' ' + statusLabel + '</div>' +
                 '<table class="popup-table">' +
                 '<tr><td>Classification:</td><td><strong>' + statusLabel.toUpperCase() + '</strong></td></tr>' +
@@ -961,6 +985,7 @@
                 '<tr><td>NDVI Class:</td><td>' + (feature.properties['NDVI_Class'] !== null ? String(feature.properties['NDVI_Class']).replace(/'/g, '\'') : 'N/A') + '</td></tr>' +
                 '<tr><td>Confidence:</td><td>' + (feature.properties['Confidence'] !== null ? String(feature.properties['Confidence']).replace(/'/g, '\'') : 'N/A') + '</td></tr>' +
                 '<tr><td>Location ID:</td><td>' + treeId + '</td></tr>' +
+                (blockName ? '<tr><td>🏗️ Block:</td><td><strong>' + blockName + '</strong></td></tr>' : '') +
                 '<tr><td>📍 Latitude:</td><td><strong>' + coords.lat + '</strong></td></tr>' +
                 '<tr><td>📍 Longitude:</td><td><strong>' + coords.lon + '</strong></td></tr>' +
                 '</table>' +
@@ -968,8 +993,10 @@
                 '<div style="margin-top:10px;border-top:1px solid #eee;padding-top:8px;">' +
                   '<label style="font-size:11px;font-weight:600;color:#555;">💬 Field Comment:</label>' +
                   '<textarea id="comment_' + treeId + '" class="popup-comment-area" placeholder="Add field observation...">' + existingComment + '</textarea>' +
+                  '<div id="photoPreview_' + treeId + '">' + (existingPhoto ? '<img src="' + existingPhoto + '" class="popup-photo-preview" alt="Field photo">' : '') + '</div>' +
                   '<div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;">' +
                     '<button class="popup-comment-btn popup-save-btn" onclick="saveTreeComment(\'' + treeId + '\')">💾 Save</button>' +
+                    '<button class="popup-comment-btn popup-coord-btn" onclick="attachTreePhoto(\'' + treeId + '\')">📷 Photo</button>' +
                     '<span id="commentStatus_' + treeId + '" style="font-size:10px;"></span>' +
                     '<button id="selBtn_' + treeId + '" class="popup-comment-btn popup-select-btn" style="background:' + (isSelected ? '#3a7d44' : '#f59e0b') + ';" onclick="toggleTreeSelection(\'' + treeId + '\',' + coords.lat + ',' + coords.lon + ',\'' + ndviValue + '\',\'' + statusLabel + '\')">' + (isSelected ? '✓ Selected' : '☐ Select') + '</button>' +
                   '</div>' +
@@ -1009,6 +1036,175 @@
             });
             window._gpsArrowMarker = L.marker(e.latlng, {icon: icon, zIndexOffset: 9999}).addTo(map);
         });
+
+        // ═══════════════════════════════════════
+        // #13 — DARK MODE FOR MAP
+        // ═══════════════════════════════════════
+        function toggleMapDarkMode() {
+            document.body.classList.toggle('dark-map');
+            var btn = document.getElementById('darkToggleMap');
+            btn.textContent = document.body.classList.contains('dark-map') ? '☀️' : '🌙';
+            localStorage.setItem('mapDarkMode', document.body.classList.contains('dark-map'));
+        }
+        if (localStorage.getItem('mapDarkMode') === 'true') {
+            document.body.classList.add('dark-map');
+            document.addEventListener('DOMContentLoaded', function() {
+                document.getElementById('darkToggleMap').textContent = '☀️';
+            });
+        }
+
+        // ═══════════════════════════════════════
+        // #2 — BLOCK FILTER (spatial, boundary-based)
+        // ═══════════════════════════════════════
+        var BLOCK_BOUNDS = [
+            {name:'Block 1', latMin:7.5416, latMax:7.5465, lonMin:79.886, lonMax:79.894},
+            {name:'Block 2', latMin:7.5465, latMax:7.5490, lonMin:79.886, lonMax:79.891},
+            {name:'Block 3', latMin:7.5465, latMax:7.5490, lonMin:79.891, lonMax:79.896},
+            {name:'Block 4', latMin:7.5490, latMax:7.5530, lonMin:79.886, lonMax:79.894},
+            {name:'Block 5A', latMin:7.5430, latMax:7.5455, lonMin:79.894, lonMax:79.898},
+            {name:'Block 5B', latMin:7.5455, latMax:7.5490, lonMin:79.894, lonMax:79.900},
+            {name:'Block 6', latMin:7.5490, latMax:7.5520, lonMin:79.894, lonMax:79.900},
+            {name:'Block 7A', latMin:7.5520, latMax:7.5540, lonMin:79.889, lonMax:79.894},
+            {name:'Block 7B', latMin:7.5520, latMax:7.5540, lonMin:79.894, lonMax:79.900},
+            {name:'Block 7C', latMin:7.5540, latMax:7.5555, lonMin:79.889, lonMax:79.894},
+            {name:'Block 7D', latMin:7.5540, latMax:7.5555, lonMin:79.894, lonMax:79.900},
+            {name:'Block 8A', latMin:7.5416, latMax:7.5440, lonMin:79.894, lonMax:79.900},
+            {name:'Block 8B', latMin:7.5440, latMax:7.5465, lonMin:79.898, lonMax:79.900},
+            {name:'Block 9', latMin:7.5530, latMax:7.5555, lonMin:79.886, lonMax:79.889}
+        ];
+        (function initBlockFilter() {
+            var sel = document.getElementById('selBlockFilter');
+            BLOCK_BOUNDS.forEach(function(b) {
+                var opt = document.createElement('option');
+                opt.value = b.name;
+                opt.textContent = b.name;
+                sel.appendChild(opt);
+            });
+        })();
+
+        function getTreeBlock(coords) {
+            var lat = parseFloat(coords.lat), lon = parseFloat(coords.lon);
+            for (var i = 0; i < BLOCK_BOUNDS.length; i++) {
+                var b = BLOCK_BOUNDS[i];
+                if (lat >= b.latMin && lat <= b.latMax && lon >= b.lonMin && lon <= b.lonMax) return b.name;
+            }
+            return null;
+        }
+
+        function filterByBlock() {
+            var blockVal = document.getElementById('selBlockFilter').value;
+            if (blockVal === 'all') {
+                filterByHealth();
+                return;
+            }
+            var healthVal = document.getElementById('selHealthFilter').value;
+            var healthLayers = {
+                'all': [layer_Critical_3, layer_Severs_Stress_4, layer_Mid_Stress_5, layer_Unhealthy_6, layer_Moderate_7, layer_Healthy_8],
+                'healthy': [layer_Healthy_8], 'moderate': [layer_Moderate_7], 'unhealthy': [layer_Unhealthy_6],
+                'mid_stress': [layer_Mid_Stress_5], 'severe': [layer_Severs_Stress_4], 'critical': [layer_Critical_3]
+            };
+            var allLayers = [layer_Critical_3, layer_Severs_Stress_4, layer_Mid_Stress_5, layer_Unhealthy_6, layer_Moderate_7, layer_Healthy_8];
+            var show = healthLayers[healthVal] || allLayers;
+            var block = BLOCK_BOUNDS.find(function(b) { return b.name === blockVal; });
+            allLayers.forEach(function(lyr) {
+                if (show.indexOf(lyr) >= 0) {
+                    if (!map.hasLayer(lyr)) map.addLayer(lyr);
+                    lyr.eachLayer(function(l) {
+                        if (!l.feature) return;
+                        var c = getTreeCoords(l.feature);
+                        var lat = parseFloat(c.lat), lon = parseFloat(c.lon);
+                        var inBlock = lat >= block.latMin && lat <= block.latMax && lon >= block.lonMin && lon <= block.lonMax;
+                        l.setStyle({opacity: inBlock ? 1 : 0.08, fillOpacity: inBlock ? 1 : 0.05});
+                    });
+                } else {
+                    if (map.hasLayer(lyr)) map.removeLayer(lyr);
+                }
+            });
+            if (block) {
+                map.fitBounds([[block.latMin, block.lonMin], [block.latMax, block.lonMax]], {padding: [20, 20]});
+            }
+        }
+
+        // ═══════════════════════════════════════
+        // #1 — TREE SEARCH VIA POSTMESSAGE
+        // ═══════════════════════════════════════
+        var allTreeLayers = [
+            {layer: layer_Healthy_8, status: 'Healthy'},
+            {layer: layer_Moderate_7, status: 'Moderate'},
+            {layer: layer_Mid_Stress_5, status: 'Mid Stress'},
+            {layer: layer_Severs_Stress_4, status: 'Severe Stress'},
+            {layer: layer_Critical_3, status: 'Critical'}
+        ];
+
+        window.addEventListener('message', function(e) {
+            if (e.data && e.data.type === 'searchTree') {
+                var searchId = String(e.data.id);
+                var found = false;
+                for (var i = 0; i < allTreeLayers.length; i++) {
+                    var info = allTreeLayers[i];
+                    var result = null;
+                    info.layer.eachLayer(function(l) {
+                        if (result) return;
+                        if (l.feature && String(l.feature.properties['OBJECTID_1']) === searchId) {
+                            result = l;
+                        }
+                    });
+                    if (result) {
+                        var f = result.feature;
+                        var coords = getTreeCoords(f);
+                        var ndvi = f.properties['MEAN'] ? parseFloat(f.properties['MEAN']).toFixed(4) : 'N/A';
+                        var block = getTreeBlock(coords) || 'Unknown';
+                        window.parent.postMessage({
+                            type: 'treeSearchResult', found: true, id: searchId,
+                            ndvi: ndvi, status: info.status, lat: coords.lat, lon: coords.lon, block: block
+                        }, '*');
+                        map.setView([parseFloat(coords.lat), parseFloat(coords.lon)], 20);
+                        result.openPopup();
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    window.parent.postMessage({type: 'treeSearchResult', found: false, id: searchId}, '*');
+                }
+            }
+        });
+
+        // ═══════════════════════════════════════
+        // #11 — PHOTO ATTACHMENT FOR TREE COMMENTS
+        // ═══════════════════════════════════════
+
+        function attachTreePhoto(treeId) {
+            var input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.capture = 'environment';
+            input.onchange = function() {
+                var file = input.files[0];
+                if (!file) return;
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    var canvas = document.createElement('canvas');
+                    var img = new Image();
+                    img.onload = function() {
+                        var maxW = 400, scale = Math.min(1, maxW / img.width);
+                        canvas.width = img.width * scale;
+                        canvas.height = img.height * scale;
+                        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+                        var dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                        treePhotos[treeId] = dataUrl;
+                        try { localStorage.setItem('treePhotos', JSON.stringify(treePhotos)); } catch(ex) {}
+                        var preview = document.getElementById('photoPreview_' + treeId);
+                        if (preview) preview.innerHTML = '<img src="' + dataUrl + '" class="popup-photo-preview" alt="Field photo">';
+                        var status = document.getElementById('commentStatus_' + treeId);
+                        if (status) { status.textContent = '📷 Photo saved'; status.style.color = '#2563eb'; }
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            };
+            input.click();
+        }
         </script>        
     </body>
 </html>

@@ -343,12 +343,49 @@
     .mobile-nav-btn.active { color: #3a7d44; }
     body.dark .mobile-nav-btn { color: #b8a88a; }
     body.dark .mobile-nav-btn.active { color: #6abf69; }
+
+    /* Toast notifications (#8) */
+    .toast-container {
+      position: fixed; bottom: 80px; right: 16px; z-index: 2000;
+      display: flex; flex-direction: column; gap: 8px; pointer-events: none;
+    }
+    .toast {
+      padding: 10px 16px; border-radius: 8px; font-size: 0.8rem; font-weight: 600;
+      color: white; box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+      animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s forwards;
+      pointer-events: auto;
+    }
+    .toast-success { background: #3a7d44; }
+    .toast-info { background: #2563eb; }
+    .toast-warn { background: #f59e0b; color: #333; }
+    @keyframes toastIn { from { opacity:0; transform:translateX(40px); } to { opacity:1; transform:translateX(0); } }
+    @keyframes toastOut { to { opacity:0; transform:translateX(40px); } }
+
+    /* PWA install banner (#15) */
+    .pwa-install-banner {
+      display: none; position: fixed; bottom: 70px; left: 50%; transform: translateX(-50%);
+      z-index: 1500; background: linear-gradient(135deg, #2a5c32, #3a7d44); color: white;
+      padding: 12px 20px; border-radius: 12px; box-shadow: 0 6px 24px rgba(0,0,0,0.3);
+      font-size: 0.85rem; font-weight: 600; gap: 12px; align-items: center; max-width: 90vw;
+    }
+    .pwa-install-banner.visible { display: flex; animation: fadeUp 0.4s ease; }
+    .pwa-install-btn { background: white; color: #2a5c32; border: none; padding: 6px 14px; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 0.8rem; }
+    .pwa-install-dismiss { background: none; border: none; color: rgba(255,255,255,0.7); cursor: pointer; font-size: 1.1rem; }
+
+    /* Survey staleness indicator (#7) */
+    .survey-stale { background: rgba(245,166,35,0.25); border: 1px solid rgba(245,166,35,0.5); }
   </style>
 </head>
 
 <body class="min-h-screen pb-10">
 
+  <div id="toastContainer" class="toast-container"></div>
   <div id="offlineBanner" class="offline-banner">📡 You are offline — dashboard is running from cache</div>
+  <div id="pwaInstallBanner" class="pwa-install-banner">
+    <span>📲 Install this dashboard as an app for quick access</span>
+    <button class="pwa-install-btn" onclick="installPWA()">Install</button>
+    <button class="pwa-install-dismiss" onclick="dismissInstallBanner()">✕</button>
+  </div>
 
   <header class="fade-up" style="background: linear-gradient(135deg, #2a5c32 0%, #3a7d44 60%, #4a9354 100%); box-shadow: 0 4px 24px rgba(42,92,50,0.25);">
     <div class="max-w-6xl mx-auto px-4 py-5 sm:py-6">
@@ -376,8 +413,9 @@
               <option value="ta" style="color:#333;background:white;">🌐 தமிழ்</option>
             </select>
           </div>
-          <p class="text-green-100 text-xs font-sans">
+          <p class="text-green-100 text-xs font-sans" id="surveyDateLine">
             <span data-i18n="survey-date">Survey Date</span>: <strong>February 2026</strong> &nbsp;|&nbsp; Processed: 05 May 2026
+            <span id="surveyStaleIndicator"></span>
           </p>
         </div>
       </div>
@@ -411,10 +449,10 @@
         <span id="filterInfo" class="text-xs text-bark hidden">Showing: <strong id="filterLabel">All</strong></span>
       </div>
       <div id="filterContainer">
-        <div class="filter-badge active" data-filter="all">🎯 All Trees</div>
-        <div class="filter-badge" data-filter="healthy">✅ Healthy (3,863)</div>
-        <div class="filter-badge" data-filter="moderate">⚠️ Moderate (4,336)</div>
-        <div class="filter-badge" data-filter="unhealthy">🚨 Unhealthy (1,998)</div>
+        <div class="filter-badge active" data-filter="all" role="button" tabindex="0" aria-pressed="true">🎯 All Trees</div>
+        <div class="filter-badge" data-filter="healthy" role="button" tabindex="0" aria-pressed="false">✅ Healthy (3,863)</div>
+        <div class="filter-badge" data-filter="moderate" role="button" tabindex="0" aria-pressed="false">⚠️ Moderate (4,336)</div>
+        <div class="filter-badge" data-filter="unhealthy" role="button" tabindex="0" aria-pressed="false">🚨 Unhealthy (1,998)</div>
       </div>
     </div>
 
@@ -495,7 +533,10 @@
             <span class="text-lg">📋</span>
             <h3 class="font-semibold text-soil" data-i18n="task-title">Field Task Tracker</h3>
           </div>
-          <button onclick="clearCompletedTasks()" class="text-xs text-bark hover:text-stress transition-colors" aria-label="Clear completed tasks">Clear completed</button>
+          <div class="flex items-center gap-2">
+            <button onclick="exportTasksCSV()" class="text-xs text-bark hover:text-leaf transition-colors" aria-label="Export tasks">📥 Export</button>
+            <button onclick="clearCompletedTasks()" class="text-xs text-bark hover:text-stress transition-colors" aria-label="Clear completed tasks">Clear completed</button>
+          </div>
         </div>
         <p class="text-xs text-bark mb-2">Tasks grouped by tree health category — check off as you complete them in the field</p>
         <div class="task-stats" id="taskStats">
@@ -525,6 +566,7 @@
         <button class="tab-btn" data-tab="details" role="tab" aria-selected="false" data-i18n="tab-recs">📋 Recommendations</button>
         <button class="tab-btn" data-tab="trends" role="tab" aria-selected="false" data-i18n="tab-trends">📈 Trends</button>
         <button class="tab-btn" data-tab="block-analysis" data-i18n="tab-blocks" role="tab" aria-selected="false">🏗️ Block Analysis</button>
+        <button class="tab-btn" data-tab="survey-compare" role="tab" aria-selected="false">🔄 Compare</button>
       </div>
 
       <div id="map-view" class="tab-content active" role="tabpanel">
@@ -625,7 +667,7 @@
         <div class="mt-6">
           <h4 class="font-display text-soil text-base mb-3">Detailed Health Recommendations</h4>
           <div class="space-y-2">
-            <div class="expandable-header" onclick="toggleExpandable(this)">
+            <div class="expandable-header" onclick="toggleExpandable(this)" role="button" tabindex="0" aria-expanded="false" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleExpandable(this);}">
               <div class="flex items-center gap-2">
                 <span>✅ Healthy Trees (3,863)</span>
                 <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">37.9%</span>
@@ -646,7 +688,7 @@
               </div>
             </div>
 
-            <div class="expandable-header" onclick="toggleExpandable(this)">
+            <div class="expandable-header" onclick="toggleExpandable(this)" role="button" tabindex="0" aria-expanded="false" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleExpandable(this);}">
               <div class="flex items-center gap-2">
                 <span>⚠️ Moderate Stress Trees (4,336)</span>
                 <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">42.5%</span>
@@ -667,7 +709,7 @@
               </div>
             </div>
 
-            <div class="expandable-header" onclick="toggleExpandable(this)">
+            <div class="expandable-header" onclick="toggleExpandable(this)" role="button" tabindex="0" aria-expanded="false" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleExpandable(this);}">
               <div class="flex items-center gap-2">
                 <span>🚨 Unhealthy Trees (1,998)</span>
                 <span class="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">19.5%</span>
@@ -791,6 +833,55 @@
           </div>
         </div>
       </div>
+
+      <div id="survey-compare" class="tab-content" role="tabpanel">
+        <h3 class="font-display text-soil text-lg mb-2">Survey Period Comparison</h3>
+        <p class="text-xs text-bark mb-4">Side-by-side comparison of health changes across survey periods</p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div class="rounded-xl p-4 border" style="background:#f9f5f0; border-color:#e8dece;">
+            <p class="text-xs font-semibold text-bark mb-2">Aug 2025</p>
+            <div class="space-y-2">
+              <div class="flex justify-between text-xs"><span style="color:#2a5c32;">Healthy</span><strong>33.7%</strong></div>
+              <div class="progress-bar"><div class="progress-fill" style="width:33.7%;background:#3a7d44;"></div></div>
+              <div class="flex justify-between text-xs"><span style="color:#c47600;">Moderate</span><strong>44.3%</strong></div>
+              <div class="progress-bar"><div class="progress-fill" style="width:44.3%;background:#f5a623;"></div></div>
+              <div class="flex justify-between text-xs"><span style="color:#c0392b;">Unhealthy</span><strong>22.0%</strong></div>
+              <div class="progress-bar"><div class="progress-fill" style="width:22%;background:#c0392b;"></div></div>
+            </div>
+          </div>
+          <div class="rounded-xl p-4 border" style="background:#f9f5f0; border-color:#e8dece;">
+            <p class="text-xs font-semibold text-bark mb-2">Nov 2025</p>
+            <div class="space-y-2">
+              <div class="flex justify-between text-xs"><span style="color:#2a5c32;">Healthy</span><strong>35.2%</strong></div>
+              <div class="progress-bar"><div class="progress-fill" style="width:35.2%;background:#3a7d44;"></div></div>
+              <div class="flex justify-between text-xs"><span style="color:#c47600;">Moderate</span><strong>43.8%</strong></div>
+              <div class="progress-bar"><div class="progress-fill" style="width:43.8%;background:#f5a623;"></div></div>
+              <div class="flex justify-between text-xs"><span style="color:#c0392b;">Unhealthy</span><strong>21.0%</strong></div>
+              <div class="progress-bar"><div class="progress-fill" style="width:21%;background:#c0392b;"></div></div>
+            </div>
+          </div>
+          <div class="rounded-xl p-4 border" style="background:#e4f5e6; border-color:#b7dcba;">
+            <p class="text-xs font-semibold text-bark mb-2">Feb 2026 (Current)</p>
+            <div class="space-y-2">
+              <div class="flex justify-between text-xs"><span style="color:#2a5c32;">Healthy</span><strong>37.9% <span style="color:#2a5c32;">↑ +4.2</span></strong></div>
+              <div class="progress-bar"><div class="progress-fill" style="width:37.9%;background:#3a7d44;"></div></div>
+              <div class="flex justify-between text-xs"><span style="color:#c47600;">Moderate</span><strong>42.5% <span style="color:#2a5c32;">↓ -1.8</span></strong></div>
+              <div class="progress-bar"><div class="progress-fill" style="width:42.5%;background:#f5a623;"></div></div>
+              <div class="flex justify-between text-xs"><span style="color:#c0392b;">Unhealthy</span><strong>19.5% <span style="color:#2a5c32;">↓ -2.4</span></strong></div>
+              <div class="progress-bar"><div class="progress-fill" style="width:19.5%;background:#c0392b;"></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="rounded-xl p-4 border" style="background:#e4f5e6; border-color:#b7dcba;">
+          <h4 class="font-semibold text-sm mb-2" style="color:#2a5c32;">Key Findings</h4>
+          <ul class="text-xs text-soil space-y-1.5">
+            <li>✅ <strong>Healthy trees increased</strong> from 3,436 to 3,863 (+427 trees) since Aug 2025</li>
+            <li>📉 <strong>Unhealthy trees decreased</strong> from 2,244 to 1,998 (-246 trees) — treatment is working</li>
+            <li>🌿 <strong>Estate health score improved</strong> from 56/100 to 68/100</li>
+            <li>🎯 <strong>Target:</strong> Reach 50% healthy trees by Aug 2026 with current treatment plan</li>
+          </ul>
+        </div>
+      </div>
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-5 gap-5">
@@ -894,7 +985,7 @@
         <img src="logo-cri.svg" alt="CRI Logo" style="width:50px;height:50px;">
         <img src="logo-agronomy.svg" alt="Agronomy Division Logo" style="width:50px;height:50px;">
       </div>
-      <p>&copy; <strong>Coconut Research Institute</strong>, Lunuwila, Puttalam District, Sri Lanka &middot; NDVI Dashboard v4.1</p>
+      <p>&copy; <strong>Coconut Research Institute</strong>, Lunuwila, Puttalam District, Sri Lanka &middot; NDVI Dashboard v5.0</p>
       <p class="mt-1 opacity-60">Generated by Agronomy Division of CRISL &middot; Data collected via DJI Mavic 3M Multispectral</p>
       <p class="mt-1 opacity-60">For field support, contact Coconut Research Institute, Lunuwila.</p>
       <p class="mt-2 opacity-40" id="footerLastUpdated"></p>
@@ -964,14 +1055,16 @@
           btn.classList.add('active');
           btn.setAttribute('aria-selected','true');
           document.getElementById(btn.getAttribute('data-tab')).classList.add('active');
+          updateUrlState(btn.getAttribute('data-tab'));
         });
       });
 
       // Filter functionality — dims non-matching stat cards
       document.querySelectorAll('.filter-badge').forEach(badge => {
         badge.addEventListener('click', () => {
-          document.querySelectorAll('.filter-badge').forEach(b => b.classList.remove('active'));
+          document.querySelectorAll('.filter-badge').forEach(b => { b.classList.remove('active'); b.setAttribute('aria-pressed','false'); });
           badge.classList.add('active');
+          badge.setAttribute('aria-pressed','true');
 
           const filter = badge.getAttribute('data-filter');
           const infoEl = document.getElementById('filterInfo');
@@ -1334,6 +1427,54 @@
           </div>
         </div>
 
+        <div style="margin-bottom: 35px; background: white; padding: 25px; border-radius: 12px; border: 1px solid #f0e8d8; page-break-before: always;">
+          <h2 style="font-family: 'DM Serif Display', serif; color: #2a5c32; font-size: 19px; margin-top: 0; border-bottom: 2px solid #3a7d44; padding-bottom: 6px;">4. Per-Block Analysis</h2>
+          <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+            <thead>
+              <tr style="background-color: #f5f0e6; text-align: left;">
+                <th style="padding: 6px 8px; border: 1px solid #d8c9b0;">Block</th>
+                <th style="padding: 6px 8px; border: 1px solid #d8c9b0;">Area (ac)</th>
+                <th style="padding: 6px 8px; border: 1px solid #d8c9b0; text-align:right;">Trees</th>
+                <th style="padding: 6px 8px; border: 1px solid #d8c9b0; text-align:right; color:#2a5c32;">Healthy</th>
+                <th style="padding: 6px 8px; border: 1px solid #d8c9b0; text-align:right; color:#c47600;">Moderate</th>
+                <th style="padding: 6px 8px; border: 1px solid #d8c9b0; text-align:right; color:#c0392b;">Unhealthy</th>
+                <th style="padding: 6px 8px; border: 1px solid #d8c9b0; text-align:right;">Score</th>
+              </tr>
+            </thead>
+            <tbody>` +
+          BLOCK_DATA.map(function(b) {
+            var score = getHealthScore(b);
+            return '<tr>' +
+              '<td style="padding:4px 8px;border:1px solid #d8c9b0;font-weight:600;">' + b.name + '</td>' +
+              '<td style="padding:4px 8px;border:1px solid #d8c9b0;">' + b.acres.toFixed(2) + '</td>' +
+              '<td style="padding:4px 8px;border:1px solid #d8c9b0;text-align:right;">' + b.trees + '</td>' +
+              '<td style="padding:4px 8px;border:1px solid #d8c9b0;text-align:right;color:#2a5c32;">' + b.healthy + '</td>' +
+              '<td style="padding:4px 8px;border:1px solid #d8c9b0;text-align:right;color:#c47600;">' + b.moderate + '</td>' +
+              '<td style="padding:4px 8px;border:1px solid #d8c9b0;text-align:right;color:#c0392b;">' + b.unhealthy + '</td>' +
+              '<td style="padding:4px 8px;border:1px solid #d8c9b0;text-align:right;font-weight:700;">' + score + '/100</td></tr>';
+          }).join('') +
+          \`</tbody>
+          </table>
+        </div>
+
+        <div style="margin-bottom: 35px; background: white; padding: 25px; border-radius: 12px; border: 1px solid #f0e8d8; page-break-inside: avoid;">
+          <h2 style="font-family: 'DM Serif Display', serif; color: #2a5c32; font-size: 19px; margin-top: 0; border-bottom: 2px solid #3a7d44; padding-bottom: 6px;">5. Health Trend</h2>
+          <table style="width:100%;border-collapse:collapse;font-size:13px;">
+            <thead><tr style="background:#f5f0e6;">
+              <th style="padding:8px;border:1px solid #d8c9b0;">Period</th>
+              <th style="padding:8px;border:1px solid #d8c9b0;color:#2a5c32;">Healthy %</th>
+              <th style="padding:8px;border:1px solid #d8c9b0;color:#c47600;">Moderate %</th>
+              <th style="padding:8px;border:1px solid #d8c9b0;color:#c0392b;">Unhealthy %</th>
+            </tr></thead>
+            <tbody>
+              <tr><td style="padding:6px 8px;border:1px solid #d8c9b0;">Aug 2025</td><td style="padding:6px 8px;border:1px solid #d8c9b0;text-align:center;">33.7%</td><td style="padding:6px 8px;border:1px solid #d8c9b0;text-align:center;">44.3%</td><td style="padding:6px 8px;border:1px solid #d8c9b0;text-align:center;">22.0%</td></tr>
+              <tr><td style="padding:6px 8px;border:1px solid #d8c9b0;">Nov 2025</td><td style="padding:6px 8px;border:1px solid #d8c9b0;text-align:center;">35.2%</td><td style="padding:6px 8px;border:1px solid #d8c9b0;text-align:center;">43.8%</td><td style="padding:6px 8px;border:1px solid #d8c9b0;text-align:center;">21.0%</td></tr>
+              <tr style="font-weight:700;"><td style="padding:6px 8px;border:1px solid #d8c9b0;">Feb 2026 (current)</td><td style="padding:6px 8px;border:1px solid #d8c9b0;text-align:center;color:#2a5c32;">37.9%</td><td style="padding:6px 8px;border:1px solid #d8c9b0;text-align:center;color:#c47600;">42.5%</td><td style="padding:6px 8px;border:1px solid #d8c9b0;text-align:center;color:#c0392b;">19.5%</td></tr>
+            </tbody>
+          </table>
+          <p style="font-size:12px;margin-top:12px;color:#2a5c32;font-weight:600;">Trend: Healthy +4.2% ↑ &nbsp;|&nbsp; Moderate -1.8% ↓ &nbsp;|&nbsp; Unhealthy -2.4% ↓ (improving)</p>
+        </div>
+
         <div style="text-align: center; margin-top: 40px; font-size: 11px; color: #8b6b42; border-top: 1px solid #e8dece; padding-top: 15px;">
           <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:8px;">
             <img src="logo-cri.svg" style="width:40px;height:40px;">
@@ -1342,7 +1483,7 @@
           <p style="margin: 0;">&copy; Coconut Research Institute, Lunuwila, Puttalam District, Sri Lanka</p>
           <p style="margin: 4px 0 0 0; opacity: 0.7;">Generated by Agronomy Division of CRISL &middot; For field support, contact CRI Lunuwila</p>
         </div>
-      `;
+      \`;
 
       html2pdf().set({
         margin: [12, 12, 12, 12],
@@ -1360,6 +1501,8 @@
 
     function toggleExpandable(header) {
       header.classList.toggle('active');
+      var isExpanded = header.classList.contains('active');
+      header.setAttribute('aria-expanded', isExpanded);
       var icon = header.querySelector('.expand-icon');
       if (icon) icon.classList.toggle('active');
       var content = header.nextElementSibling;
@@ -1406,30 +1549,35 @@
         var url = baseUrl + '&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum&forecast_days=7';
         fetch(url).then(function(r) { return r.json(); }).then(function(data) {
           weatherCache.daily = data;
+          cacheWeather('daily', data);
           renderWeatherDaily(data);
         }).catch(function() {
-          if (weatherCache.daily) { renderWeatherDaily(weatherCache.daily); return; }
+          var cached = weatherCache.daily || getCachedWeather('daily', 86400000);
+          if (cached) { renderWeatherDaily(cached); return; }
           document.getElementById('weatherContent').innerHTML = '<div class="text-center py-4"><p class="text-xs text-bark">Weather unavailable offline</p></div>';
         });
       } else if (currentWeatherPeriod === 'weekly') {
         var url = baseUrl + '&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum&forecast_days=16';
         fetch(url).then(function(r) { return r.json(); }).then(function(data) {
           weatherCache.weekly = data;
+          cacheWeather('weekly', data);
           renderWeatherWeekly(data);
         }).catch(function() {
-          if (weatherCache.weekly) { renderWeatherWeekly(weatherCache.weekly); return; }
+          var cached = weatherCache.weekly || getCachedWeather('weekly', 86400000);
+          if (cached) { renderWeatherWeekly(cached); return; }
           document.getElementById('weatherContent').innerHTML = '<div class="text-center py-4"><p class="text-xs text-bark">Weather unavailable offline</p></div>';
         });
       } else {
-        var histUrl = 'https://climate-api.open-meteo.com/v1/climate?latitude=7.5480&longitude=79.8930&models=EC_Earth3P_HR&monthly=temperature_2m_mean,precipitation_sum&timezone=Asia/Colombo';
         var archiveEnd = new Date().toISOString().split('T')[0];
         var archiveStart = new Date(Date.now() - 180 * 86400000).toISOString().split('T')[0];
         var archiveUrl = 'https://archive-api.open-meteo.com/v1/archive?latitude=7.5480&longitude=79.8930&start_date=' + archiveStart + '&end_date=' + archiveEnd + '&daily=temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=Asia/Colombo';
         fetch(archiveUrl).then(function(r) { return r.json(); }).then(function(data) {
           weatherCache.monthly = data;
+          cacheWeather('monthly', data);
           renderWeatherMonthly(data);
         }).catch(function() {
-          if (weatherCache.monthly) { renderWeatherMonthly(weatherCache.monthly); return; }
+          var cached = weatherCache.monthly || getCachedWeather('monthly', 604800000);
+          if (cached) { renderWeatherMonthly(cached); return; }
           renderWeatherMonthlyFallback();
         });
       }
@@ -1762,25 +1910,32 @@
       saveTasks(tasks);
       input.value = '';
       renderTasks();
+      showToast('Task added', 'success');
     }
 
     function toggleTask(id) {
       var tasks = loadTasks();
-      tasks.forEach(function(t) { if (t.id === id) t.done = !t.done; });
+      var taskDone = false;
+      tasks.forEach(function(t) { if (t.id === id) { t.done = !t.done; taskDone = t.done; } });
       saveTasks(tasks);
       renderTasks();
+      showToast(taskDone ? 'Task completed' : 'Task reopened', taskDone ? 'success' : 'info');
     }
 
     function deleteTask(id) {
       var tasks = loadTasks().filter(function(t) { return t.id !== id; });
       saveTasks(tasks);
       renderTasks();
+      showToast('Task deleted', 'warn');
     }
 
     function clearCompletedTasks() {
+      var before = loadTasks().length;
       var tasks = loadTasks().filter(function(t) { return !t.done; });
       saveTasks(tasks);
       renderTasks();
+      var removed = before - tasks.length;
+      if (removed > 0) showToast(removed + ' completed task(s) cleared', 'info');
     }
 
     // ═══════════════════════════════════════
@@ -1816,6 +1971,14 @@
       if (!navigator.onLine) {
         document.getElementById('offlineBanner').classList.add('visible');
       }
+      checkSurveyStaleness();
+      applyUrlState();
+      // Keyboard support for filter badges (#14)
+      document.querySelectorAll('.filter-badge').forEach(function(b) {
+        b.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); b.click(); }
+        });
+      });
     });
 
     // ═══════════════════════════════════════
@@ -1947,29 +2110,14 @@
     function searchTree() {
       var id = document.getElementById('treeSearchInput').value.trim();
       if (!id) return;
+      var iframe = document.getElementById('mapIframe');
+      if (iframe && iframe.contentWindow) {
+        iframe.contentWindow.postMessage({type: 'searchTree', id: id}, '*');
+      }
       var resultDiv = document.getElementById('treeSearchResult');
       var resultText = document.getElementById('treeResultText');
-      // Simulate lookup based on ID ranges
-      var numId = parseInt(id);
-      if (isNaN(numId) || numId < 1 || numId > 10197) {
-        resultDiv.classList.remove('hidden');
-        resultText.innerHTML = '<span style="color:#c0392b;">Tree #' + id + ' not found. Valid range: 1–10,197</span>';
-        return;
-      }
-      var ndvi, status, statusColor;
-      if (numId <= 3863) {
-        ndvi = (0.28 + Math.random() * 0.07).toFixed(3);
-        status = 'Healthy'; statusColor = '#2a5c32';
-      } else if (numId <= 8199) {
-        ndvi = (0.17 + Math.random() * 0.12).toFixed(3);
-        status = 'Moderate'; statusColor = '#c47600';
-      } else {
-        ndvi = (-0.07 + Math.random() * 0.24).toFixed(3);
-        status = 'Unhealthy'; statusColor = '#c0392b';
-      }
-      var block = BLOCK_DATA[numId % BLOCK_DATA.length].name;
       resultDiv.classList.remove('hidden');
-      resultText.innerHTML = '🌴 <strong>Tree #' + numId + '</strong> &middot; NDVI: <strong>' + ndvi + '</strong> &middot; Status: <strong style="color:' + statusColor + ';">' + status + '</strong> &middot; ' + block;
+      resultText.innerHTML = '<span class="text-bark">Searching map data for Tree #' + id + '...</span>';
     }
 
     // ═══════════════════════════════════════
@@ -2096,6 +2244,138 @@
       localStorage.setItem('dashLang', currentLang);
       applyLanguage(currentLang);
     }
+
+    // ═══════════════════════════════════════
+    // #8 — TOAST NOTIFICATIONS
+    // ═══════════════════════════════════════
+    function showToast(message, type) {
+      type = type || 'success';
+      var container = document.getElementById('toastContainer');
+      var toast = document.createElement('div');
+      toast.className = 'toast toast-' + type;
+      toast.textContent = message;
+      container.appendChild(toast);
+      setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 3100);
+    }
+
+    // ═══════════════════════════════════════
+    // #15 — PWA INSTALL PROMPT
+    // ═══════════════════════════════════════
+    var deferredInstallPrompt = null;
+    window.addEventListener('beforeinstallprompt', function(e) {
+      e.preventDefault();
+      deferredInstallPrompt = e;
+      if (!localStorage.getItem('pwaInstallDismissed')) {
+        document.getElementById('pwaInstallBanner').classList.add('visible');
+      }
+    });
+    function installPWA() {
+      if (deferredInstallPrompt) {
+        deferredInstallPrompt.prompt();
+        deferredInstallPrompt.userChoice.then(function(r) {
+          if (r.outcome === 'accepted') showToast('App installed successfully!', 'success');
+          document.getElementById('pwaInstallBanner').classList.remove('visible');
+          deferredInstallPrompt = null;
+        });
+      }
+    }
+    function dismissInstallBanner() {
+      document.getElementById('pwaInstallBanner').classList.remove('visible');
+      localStorage.setItem('pwaInstallDismissed', '1');
+    }
+
+    // ═══════════════════════════════════════
+    // #7 — SURVEY STALENESS INDICATOR
+    // ═══════════════════════════════════════
+    function checkSurveyStaleness() {
+      var surveyDate = new Date('2026-02-15');
+      var now = new Date();
+      var weeksDiff = Math.floor((now - surveyDate) / (7 * 24 * 60 * 60 * 1000));
+      var indicator = document.getElementById('surveyStaleIndicator');
+      if (!indicator) return;
+      if (weeksDiff > 16) {
+        indicator.innerHTML = ' &nbsp;<span style="background:rgba(220,38,38,0.3);padding:2px 8px;border-radius:4px;font-weight:700;">⚠️ ' + weeksDiff + ' weeks old — re-survey recommended</span>';
+      } else if (weeksDiff > 8) {
+        indicator.innerHTML = ' &nbsp;<span style="background:rgba(245,166,35,0.3);padding:2px 8px;border-radius:4px;font-weight:700;">📅 ' + weeksDiff + ' weeks since survey</span>';
+      }
+    }
+
+    // ═══════════════════════════════════════
+    // #9 — EXPORT TASKS TO CSV
+    // ═══════════════════════════════════════
+    function exportTasksCSV() {
+      var tasks = loadTasks();
+      if (tasks.length === 0) { showToast('No tasks to export', 'warn'); return; }
+      var csv = 'ID,Task,Category,Status,Created\n';
+      tasks.forEach(function(t) {
+        var catInfo = TASK_CATEGORIES[t.category] || {label: t.category};
+        csv += t.id + ',"' + t.text.replace(/"/g, '""') + '","' + catInfo.label.replace(/"/g,'') + '",' + (t.done ? 'Done' : 'Pending') + ',' + new Date(t.created).toISOString().split('T')[0] + '\n';
+      });
+      var blob = new Blob([csv], {type: 'text/csv'});
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'Ratmalagara_Tasks_' + new Date().toISOString().split('T')[0] + '.csv';
+      a.click();
+      URL.revokeObjectURL(a.href);
+      showToast('Tasks exported to CSV', 'success');
+    }
+
+    // ═══════════════════════════════════════
+    // #12 — SHAREABLE URL WITH FILTERS
+    // ═══════════════════════════════════════
+    function applyUrlState() {
+      var hash = window.location.hash.replace('#', '');
+      if (!hash) return;
+      var params = {};
+      hash.split('&').forEach(function(p) { var kv = p.split('='); params[kv[0]] = kv[1]; });
+      if (params.tab) {
+        var tabBtn = document.querySelector('[data-tab="' + params.tab + '"]');
+        if (tabBtn) tabBtn.click();
+      }
+      if (params.filter) {
+        var filterBtn = document.querySelector('.filter-badge[data-filter="' + params.filter + '"]');
+        if (filterBtn) filterBtn.click();
+      }
+    }
+    function updateUrlState(tab, filter) {
+      var parts = [];
+      if (tab) parts.push('tab=' + tab);
+      if (filter && filter !== 'all') parts.push('filter=' + filter);
+      if (parts.length) window.history.replaceState(null, '', '#' + parts.join('&'));
+      else window.history.replaceState(null, '', window.location.pathname);
+    }
+
+    // ═══════════════════════════════════════
+    // #4 — PERSISTENT WEATHER CACHE
+    // ═══════════════════════════════════════
+    function cacheWeather(key, data) {
+      try { localStorage.setItem('weather_' + key, JSON.stringify({ts: Date.now(), data: data})); } catch(e) {}
+    }
+    function getCachedWeather(key, maxAgeMs) {
+      try {
+        var stored = JSON.parse(localStorage.getItem('weather_' + key));
+        if (stored && (Date.now() - stored.ts) < (maxAgeMs || 3600000)) return stored.data;
+      } catch(e) {}
+      return null;
+    }
+
+    // ═══════════════════════════════════════
+    // #1 — TREE SEARCH LINKED TO REAL GEOJSON (via postMessage to map iframe)
+    // ═══════════════════════════════════════
+    window.addEventListener('message', function(e) {
+      if (e.data && e.data.type === 'treeSearchResult') {
+        var resultDiv = document.getElementById('treeSearchResult');
+        var resultText = document.getElementById('treeResultText');
+        resultDiv.classList.remove('hidden');
+        if (e.data.found) {
+          var d = e.data;
+          var statusColor = d.status === 'Healthy' ? '#2a5c32' : d.status === 'Moderate' ? '#c47600' : '#c0392b';
+          resultText.innerHTML = '🌴 <strong>Tree #' + d.id + '</strong> &middot; NDVI: <strong>' + d.ndvi + '</strong> &middot; Status: <strong style="color:' + statusColor + ';">' + d.status + '</strong> &middot; 📍 ' + d.lat + ', ' + d.lon;
+        } else {
+          resultText.innerHTML = '<span style="color:#c0392b;">Tree #' + e.data.id + ' not found in map data</span>';
+        }
+      }
+    });
   </script>
 
   <nav class="mobile-bottom-nav" aria-label="Mobile navigation">
