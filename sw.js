@@ -1,4 +1,4 @@
-var CACHE_NAME = 'coconut-dashboard-v3.2';
+var CACHE_NAME = 'coconut-dashboard-v3.3';
 var ASSETS = [
   './',
   './index.html',
