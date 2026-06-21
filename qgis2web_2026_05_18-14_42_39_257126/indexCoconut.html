@@ -1,0 +1,963 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="initial-scale=1,user-scalable=no,maximum-scale=1,width=device-width">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <link rel="stylesheet" href="css/leaflet.css">
+        <link rel="stylesheet" href="css/L.Control.Layers.Tree.css">
+        <link rel="stylesheet" href="css/L.Control.Locate.min.css">
+        <link rel="stylesheet" href="css/qgis2web.css">
+        <link rel="stylesheet" href="css/fontawesome-all.min.css">
+        <link rel="stylesheet" href="css/leaflet.photon.css">
+        <link rel="stylesheet" href="css/leaflet-measure.css">
+        <style>
+        html, body, #map {
+            width: 100%;
+            height: 100%;
+            padding: 0;
+            margin: 0;
+        }
+
+        /* Enhanced Popup Styling */
+        .leaflet-popup-content-wrapper {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .leaflet-popup-tip {
+            background: white;
+        }
+
+        .popup-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        .popup-table tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+
+        .popup-table td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .popup-table td:first-child {
+            font-weight: 600;
+            color: #3a7d44;
+            width: 45%;
+        }
+
+        .popup-table td:last-child {
+            color: #333;
+        }
+
+        .popup-header {
+            background: linear-gradient(135deg, #3a7d44 0%, #2a5c32 100%);
+            color: white;
+            padding: 12px 10px;
+            margin: -10px -10px 8px -10px;
+            border-radius: 6px 6px 0 0;
+            font-weight: 600;
+            font-size: 13px;
+        }
+
+        .popup-status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+
+        .status-healthy {
+            background: #e4f5e6;
+            color: #2a5c32;
+        }
+
+        .status-moderate {
+            background: #fdf0d5;
+            color: #c47600;
+        }
+
+        .status-unhealthy {
+            background: #fde0dd;
+            color: #c0392b;
+        }
+
+        /* Interactive Legend */
+        .ndvi-legend {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            padding: 15px;
+            max-width: 300px;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            max-height: 60vh;
+            overflow-y: auto;
+            font-size: 12px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .ndvi-legend h3 {
+            margin: 0 0 12px 0;
+            color: #333;
+            font-size: 14px;
+            font-weight: 600;
+            border-bottom: 3px solid #3a7d44;
+            padding-bottom: 8px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+
+        .legend-item:hover {
+            background-color: #f0f4ff;
+            transform: translateX(5px);
+        }
+
+        .legend-item.active {
+            background-color: #e8f0ff;
+            border-left: 4px solid #3a7d44;
+            padding-left: 12px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 3px;
+            margin-right: 10px;
+            border: 2px solid #ddd;
+            flex-shrink: 0;
+            transition: transform 0.2s;
+        }
+
+        .legend-item:hover .legend-color {
+            transform: scale(1.15);
+        }
+
+        .legend-info {
+            flex: 1;
+        }
+
+        .legend-label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 2px;
+        }
+
+        .legend-count {
+            font-size: 10px;
+            color: #999;
+        }
+
+        .legend-description {
+            font-size: 10px;
+            color: #666;
+            margin-top: 2px;
+            line-height: 1.3;
+        }
+
+        /* Legend toggle checkbox */
+        .legend-toggle {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 8px;
+            background: #f5f5f5;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .legend-toggle input {
+            margin-right: 8px;
+            cursor: pointer;
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Scrollbar */
+        .ndvi-legend::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .ndvi-legend::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+
+        .ndvi-legend::-webkit-scrollbar-thumb {
+            background: #3a7d44;
+            border-radius: 3px;
+        }
+
+        .ndvi-legend::-webkit-scrollbar-thumb:hover {
+            background: #2a5c32;
+        }
+        </style>
+        <title></title>
+    </head>
+    <body>
+        <div id="map">
+        </div>
+        <script src="js/qgis2web_expressions.js"></script>
+        <script src="js/leaflet.js"></script>
+        <script src="js/L.Control.Layers.Tree.min.js"></script>
+        <script src="js/L.Control.Locate.min.js"></script>
+        <script src="js/leaflet.rotatedMarker.js"></script>
+        <script src="js/leaflet.pattern.js"></script>
+        <script src="js/leaflet-hash.js"></script>
+        <script src="js/Autolinker.min.js"></script>
+        <script src="js/rbush.min.js"></script>
+        <script src="js/labelgun.min.js"></script>
+        <script src="js/labels.js"></script>
+        <script src="js/leaflet.photon.js"></script>
+        <script src="js/leaflet-measure.js"></script>
+        <script src="data/Boundary_2.js"></script>
+        <script src="data/Critical_3.js"></script>
+        <script src="data/Severs_Stress_4.js"></script>
+        <script src="data/Mid_Stress_5.js"></script>
+        <script src="data/Unhealthy_6.js"></script>
+        <script src="data/Moderate_7.js"></script>
+        <script src="data/Healthy_8.js"></script>
+        <script>
+        var highlightLayer;
+        function highlightFeature(e) {
+            highlightLayer = e.target;
+            highlightLayer.openPopup();
+        }
+        var map = L.map('map', {
+            zoomControl:false, maxZoom:28, minZoom:1
+        }).fitBounds([[7.543207261086193,79.88601747918575],[7.553582324054899,79.89933044151552]]);
+        var hash = new L.Hash(map);
+        map.attributionControl.setPrefix('<a href="https://github.com/qgis2web/qgis2web" target="_blank">qgis2web</a> &middot; <a href="https://leafletjs.com" title="A JS library for interactive maps">Leaflet</a> &middot; <a href="https://qgis.org">QGIS</a>');
+        var autolinker = new Autolinker({truncate: {length: 30, location: 'smart'}});
+        // remove popup's row if "visible-with-data"
+        function removeEmptyRowsFromPopupContent(content, feature) {
+         var tempDiv = document.createElement('div');
+         tempDiv.innerHTML = content;
+         var rows = tempDiv.querySelectorAll('tr');
+         for (var i = 0; i < rows.length; i++) {
+             var td = rows[i].querySelector('td.visible-with-data');
+             var key = td ? td.id : '';
+             if (td && td.classList.contains('visible-with-data') && feature.properties[key] == null) {
+                 rows[i].parentNode.removeChild(rows[i]);
+             }
+         }
+         return tempDiv.innerHTML;
+        }
+        // modify popup if contains media
+        function addClassToPopupIfMedia(content, popup) {
+            var tempDiv = document.createElement('div');
+            tempDiv.innerHTML = content;
+            var imgTd = tempDiv.querySelector('td img');
+            if (imgTd) {
+                var src = imgTd.getAttribute('src');
+                if (/\.(jpg|jpeg|png|gif|bmp|webp|avif)$/i.test(src)) {
+                    popup._contentNode.classList.add('media');
+                    setTimeout(function() {
+                        popup.update();
+                    }, 10);
+                } else if (/\.(mp3|wav|ogg|aac)$/i.test(src)) {
+                    var audio = document.createElement('audio');
+                    audio.controls = true;
+                    audio.src = src;
+                    imgTd.parentNode.replaceChild(audio, imgTd);
+                    popup._contentNode.classList.add('media');
+                    setTimeout(function() {
+                        popup.setContent(tempDiv.innerHTML);
+                        popup.update();
+                    }, 10);
+                } else if (/\.(mp4|webm|ogg|mov)$/i.test(src)) {
+                    var video = document.createElement('video');
+                    video.controls = true;
+                    video.src = src;
+                    video.style.width = "400px";
+                    video.style.height = "300px";
+                    video.style.maxHeight = "60vh";
+                    video.style.maxWidth = "60vw";
+                    imgTd.parentNode.replaceChild(video, imgTd);
+                    popup._contentNode.classList.add('media');
+                    // Aggiorna il popup quando il video carica i metadati
+                    video.addEventListener('loadedmetadata', function() {
+                        popup.update();
+                    });
+                    setTimeout(function() {
+                        popup.setContent(tempDiv.innerHTML);
+                        popup.update();
+                    }, 10);
+                } else {
+                    popup._contentNode.classList.remove('media');
+                }
+            } else {
+                popup._contentNode.classList.remove('media');
+            }
+        }
+        var zoomControl = L.control.zoom({
+            position: 'topleft'
+        }).addTo(map);
+        L.control.locate({locateOptions: {maxZoom: 19}}).addTo(map);
+        var measureControl = new L.Control.Measure({
+            position: 'topleft',
+            primaryLengthUnit: 'meters',
+            secondaryLengthUnit: 'kilometers',
+            primaryAreaUnit: 'sqmeters',
+            secondaryAreaUnit: 'hectares'
+        });
+        measureControl.addTo(map);
+        document.getElementsByClassName('leaflet-control-measure-toggle')[0].innerHTML = '';
+        document.getElementsByClassName('leaflet-control-measure-toggle')[0].className += ' fas fa-ruler';
+        var bounds_group = new L.featureGroup([]);
+        function setBounds() {
+        }
+        map.createPane('pane_GoogleSatellite_0');
+        map.getPane('pane_GoogleSatellite_0').style.zIndex = 400;
+        var layer_GoogleSatellite_0 = L.tileLayer('https://mt1.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+            pane: 'pane_GoogleSatellite_0',
+            opacity: 1.0,
+            attribution: '',
+            minZoom: 1,
+            maxZoom: 28,
+            minNativeZoom: 0,
+            maxNativeZoom: 22
+        });
+        layer_GoogleSatellite_0;
+        map.addLayer(layer_GoogleSatellite_0);
+        map.createPane('pane_RatmalagaraEstate_1');
+        map.getPane('pane_RatmalagaraEstate_1').style.zIndex = 401;
+        var img_RatmalagaraEstate_1 = 'data/RatmalagaraEstate_1.png';
+        var img_bounds_RatmalagaraEstate_1 = [[7.5416315395741975,79.88582921399193],[7.556252747681153,79.900403588061]];
+        var layer_RatmalagaraEstate_1 = new L.imageOverlay(img_RatmalagaraEstate_1,
+                                              img_bounds_RatmalagaraEstate_1,
+                                              {pane: 'pane_RatmalagaraEstate_1'});
+        bounds_group.addLayer(layer_RatmalagaraEstate_1);
+        map.addLayer(layer_RatmalagaraEstate_1);
+        function pop_Boundary_2(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    if (typeof layer.closePopup == 'function') {
+                        layer.closePopup();
+                    } else {
+                        layer.eachLayer(function(feature){
+                            feature.closePopup()
+                        });
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var popupContent = '<table>\
+                    <tr>\
+                        <td colspan="2">' + (feature.properties['Id'] !== null ? autolinker.link(String(feature.properties['Id']).replace(/'/g, '\'').toLocaleString()) : '') + '</td>\
+                    </tr>\
+                </table>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_Boundary_2_0() {
+            return {
+                pane: 'pane_Boundary_2',
+                opacity: 1,
+                color: 'rgba(255,0,0,1.0)',
+                dashArray: '',
+                lineCap: 'square',
+                lineJoin: 'bevel',
+                weight: 2.0,
+                fillOpacity: 0,
+                interactive: true,
+            }
+        }
+        map.createPane('pane_Boundary_2');
+        map.getPane('pane_Boundary_2').style.zIndex = 402;
+        map.getPane('pane_Boundary_2').style['mix-blend-mode'] = 'normal';
+        var layer_Boundary_2 = new L.geoJson(json_Boundary_2, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_Boundary_2',
+            layerName: 'layer_Boundary_2',
+            pane: 'pane_Boundary_2',
+            onEachFeature: pop_Boundary_2,
+            style: style_Boundary_2_0,
+        });
+        bounds_group.addLayer(layer_Boundary_2);
+        map.addLayer(layer_Boundary_2);
+        function pop_Critical_3(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    if (typeof layer.closePopup == 'function') {
+                        layer.closePopup();
+                    } else {
+                        layer.eachLayer(function(feature){
+                            feature.closePopup()
+                        });
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var ndviValue = feature.properties['MEAN'] ? parseFloat(feature.properties['MEAN']).toFixed(4) : 'N/A';
+            var popupContent = '<div class="popup-header">🔴 Critical Health Status</div>' +
+                            '<table class="popup-table">' +
+                            '<tr>' +
+                            '<td>Classification:</td>' +
+                            '<td><strong>CRITICAL</strong></td>' +
+                            '</tr>' +
+                            '<tr>' +
+                            '<td>Class:</td>' +
+                            '<td>' + (feature.properties['Class'] !== null ? String(feature.properties['Class']).replace(/'/g, '\'').toLocaleString() : 'N/A') + '</td>' +
+                            '</tr>' +
+                            '<tr>' +
+                            '<td>NDVI Value:</td>' +
+                            '<td><strong style="color: #c0392b;">' + ndviValue + '</strong></td>' +
+                            '</tr>' +
+                            '<tr>' +
+                            '<td>NDVI Class:</td>' +
+                            '<td>' + (feature.properties['NDVI_Class'] !== null ? String(feature.properties['NDVI_Class']).replace(/'/g, '\'').toLocaleString() : 'N/A') + '</td>' +
+                            '</tr>' +
+                            '<tr>' +
+                            '<td>Confidence:</td>' +
+                            '<td>' + (feature.properties['Confidence'] !== null ? String(feature.properties['Confidence']).replace(/'/g, '\'').toLocaleString() : 'N/A') + '</td>' +
+                            '</tr>' +
+                            '<tr>' +
+                            '<td>Location ID:</td>' +
+                            '<td>' + (feature.properties['OBJECTID_1'] !== null ? String(feature.properties['OBJECTID_1']).replace(/'/g, '\'').toLocaleString() : 'N/A') + '</td>' +
+                            '</tr>' +
+                            '</table>' +
+                            '<div class="popup-status status-unhealthy" style="margin-top: 8px;">🚨 Immediate Action Required</div>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_Critical_3_0() {
+            return {
+                pane: 'pane_Critical_3',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(164,33,51,1.0)',
+                interactive: true,
+            }
+        }
+        map.createPane('pane_Critical_3');
+        map.getPane('pane_Critical_3').style.zIndex = 403;
+        map.getPane('pane_Critical_3').style['mix-blend-mode'] = 'normal';
+        var layer_Critical_3 = new L.geoJson(json_Critical_3, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_Critical_3',
+            layerName: 'layer_Critical_3',
+            pane: 'pane_Critical_3',
+            onEachFeature: pop_Critical_3,
+            style: style_Critical_3_0,
+        });
+        bounds_group.addLayer(layer_Critical_3);
+        map.addLayer(layer_Critical_3);
+        function pop_Severs_Stress_4(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    if (typeof layer.closePopup == 'function') {
+                        layer.closePopup();
+                    } else {
+                        layer.eachLayer(function(feature){
+                            feature.closePopup()
+                        });
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var ndviValue = feature.properties['MEAN'] ? parseFloat(feature.properties['MEAN']).toFixed(4) : 'N/A';
+            var popupContent = '<div class="popup-header">🔶 Severe Stress Status</div>' +
+                            '<table class="popup-table">' +
+                            '<tr>' +
+                            '<td>Classification:</td>' +
+                            '<td><strong>SEVERE STRESS</strong></td>' +
+                            '</tr>' +
+                            '<tr>' +
+                            '<td>Class:</td>' +
+                            '<td>' + (feature.properties['Class'] !== null ? String(feature.properties['Class']).replace(/'/g, '\'').toLocaleString() : 'N/A') + '</td>' +
+                            '</tr>' +
+                            '<tr>' +
+                            '<td>NDVI Value:</td>' +
+                            '<td><strong style="color: #c0392b;">' + ndviValue + '</strong></td>' +
+                            '</tr>' +
+                            '<tr>' +
+                            '<td>NDVI Class:</td>' +
+                            '<td>' + (feature.properties['NDVI_Class'] !== null ? String(feature.properties['NDVI_Class']).replace(/'/g, '\'').toLocaleString() : 'N/A') + '</td>' +
+                            '</tr>' +
+                            '<tr>' +
+                            '<td>Confidence:</td>' +
+                            '<td>' + (feature.properties['Confidence'] !== null ? String(feature.properties['Confidence']).replace(/'/g, '\'').toLocaleString() : 'N/A') + '</td>' +
+                            '</tr>' +
+                            '<tr>' +
+                            '<td>Location ID:</td>' +
+                            '<td>' + (feature.properties['OBJECTID_1'] !== null ? String(feature.properties['OBJECTID_1']).replace(/'/g, '\'').toLocaleString() : 'N/A') + '</td>' +
+                            '</tr>' +
+                            '</table>' +
+                            '<div class="popup-status status-unhealthy" style="margin-top: 8px;">⚠️ Treatment Recommended</div>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_Severs_Stress_4_0() {
+            return {
+                pane: 'pane_Severs_Stress_4',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(245,95,73,1.0)',
+                interactive: true,
+            }
+        }
+        map.createPane('pane_Severs_Stress_4');
+        map.getPane('pane_Severs_Stress_4').style.zIndex = 404;
+        map.getPane('pane_Severs_Stress_4').style['mix-blend-mode'] = 'normal';
+        var layer_Severs_Stress_4 = new L.geoJson(json_Severs_Stress_4, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_Severs_Stress_4',
+            layerName: 'layer_Severs_Stress_4',
+            pane: 'pane_Severs_Stress_4',
+            onEachFeature: pop_Severs_Stress_4,
+            style: style_Severs_Stress_4_0,
+        });
+        bounds_group.addLayer(layer_Severs_Stress_4);
+        map.addLayer(layer_Severs_Stress_4);
+        function pop_Mid_Stress_5(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    if (typeof layer.closePopup == 'function') {
+                        layer.closePopup();
+                    } else {
+                        layer.eachLayer(function(feature){
+                            feature.closePopup()
+                        });
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var ndviValue = feature.properties['MEAN'] ? parseFloat(feature.properties['MEAN']).toFixed(4) : 'N/A';
+            var popupContent = '<div class="popup-header">🟠 Mild Stress Status</div>' +
+                            '<table class="popup-table">' +
+                            '<tr>' +
+                            '<td>Classification:</td>' +
+                            '<td><strong>MILD STRESS</strong></td>' +
+                            '</tr>' +
+                            '<tr>' +
+                            '<td>Class:</td>' +
+                            '<td>' + (feature.properties['Class'] !== null ? String(feature.properties['Class']).replace(/'/g, '\'').toLocaleString() : 'N/A') + '</td>' +
+                            '</tr>' +
+                            '<tr>' +
+                            '<td>NDVI Value:</td>' +
+                            '<td><strong style="color: #e07b2a;">' + ndviValue + '</strong></td>' +
+                            '</tr>' +
+                            '<tr>' +
+                            '<td>NDVI Class:</td>' +
+                            '<td>' + (feature.properties['NDVI_Class'] !== null ? String(feature.properties['NDVI_Class']).replace(/'/g, '\'').toLocaleString() : 'N/A') + '</td>' +
+                            '</tr>' +
+                            '<tr>' +
+                            '<td>Confidence:</td>' +
+                            '<td>' + (feature.properties['Confidence'] !== null ? String(feature.properties['Confidence']).replace(/'/g, '\'').toLocaleString() : 'N/A') + '</td>' +
+                            '</tr>' +
+                            '<tr>' +
+                            '<td>Location ID:</td>' +
+                            '<td>' + (feature.properties['OBJECTID_1'] !== null ? String(feature.properties['OBJECTID_1']).replace(/'/g, '\'').toLocaleString() : 'N/A') + '</td>' +
+                            '</tr>' +
+                            '</table>' +
+                            '<div class="popup-status status-moderate" style="margin-top: 8px;">📋 Monitor Closely</div>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_Mid_Stress_5_0() {
+            return {
+                pane: 'pane_Mid_Stress_5',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(238,152,66,1.0)',
+                interactive: true,
+            }
+        }
+        map.createPane('pane_Mid_Stress_5');
+        map.getPane('pane_Mid_Stress_5').style.zIndex = 405;
+        map.getPane('pane_Mid_Stress_5').style['mix-blend-mode'] = 'normal';
+        var layer_Mid_Stress_5 = new L.geoJson(json_Mid_Stress_5, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_Mid_Stress_5',
+            layerName: 'layer_Mid_Stress_5',
+            pane: 'pane_Mid_Stress_5',
+            onEachFeature: pop_Mid_Stress_5,
+            style: style_Mid_Stress_5_0,
+        });
+        bounds_group.addLayer(layer_Mid_Stress_5);
+        map.addLayer(layer_Mid_Stress_5);
+        function pop_Unhealthy_6(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    if (typeof layer.closePopup == 'function') {
+                        layer.closePopup();
+                    } else {
+                        layer.eachLayer(function(feature){
+                            feature.closePopup()
+                        });
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var ndviValue = feature.properties['MEAN'] ? parseFloat(feature.properties['MEAN']).toFixed(4) : 'N/A';
+            var popupContent = '<div class="popup-header">🚨 Unhealthy Status</div>' +
+                            '<table class="popup-table">' +
+                            '<tr>' +
+                            '<td>Classification:</td>' +
+                            '<td><strong>UNHEALTHY</strong></td>' +
+                            '</tr>' +
+                            '<tr>' +
+                            '<td>Class:</td>' +
+                            '<td>' + (feature.properties['Class'] !== null ? String(feature.properties['Class']).replace(/'/g, '\'').toLocaleString() : 'N/A') + '</td>' +
+                            '</tr>' +
+                            '<tr>' +
+                            '<td>NDVI Value:</td>' +
+                            '<td><strong style="color: #c0392b;">' + ndviValue + '</strong></td>' +
+                            '</tr>' +
+                            '<tr>' +
+                            '<td>NDVI Class:</td>' +
+                            '<td>' + (feature.properties['NDVI_Class'] !== null ? String(feature.properties['NDVI_Class']).replace(/'/g, '\'').toLocaleString() : 'N/A') + '</td>' +
+                            '</tr>' +
+                            '<tr>' +
+                            '<td>Confidence:</td>' +
+                            '<td>' + (feature.properties['Confidence'] !== null ? String(feature.properties['Confidence']).replace(/'/g, '\'').toLocaleString() : 'N/A') + '</td>' +
+                            '</tr>' +
+                            '<tr>' +
+                            '<td>Location ID:</td>' +
+                            '<td>' + (feature.properties['OBJECTID_1'] !== null ? String(feature.properties['OBJECTID_1']).replace(/'/g, '\'').toLocaleString() : 'N/A') + '</td>' +
+                            '</tr>' +
+                            '</table>' +
+                            '<div class="popup-status status-unhealthy" style="margin-top: 8px;">🚨 Urgent Action</div>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_Unhealthy_6_0() {
+            return {
+                pane: 'pane_Unhealthy_6',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(227,8,5,1.0)',
+                interactive: true,
+            }
+        }
+        map.createPane('pane_Unhealthy_6');
+        map.getPane('pane_Unhealthy_6').style.zIndex = 406;
+        map.getPane('pane_Unhealthy_6').style['mix-blend-mode'] = 'normal';
+        var layer_Unhealthy_6 = new L.geoJson(json_Unhealthy_6, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_Unhealthy_6',
+            layerName: 'layer_Unhealthy_6',
+            pane: 'pane_Unhealthy_6',
+            onEachFeature: pop_Unhealthy_6,
+            style: style_Unhealthy_6_0,
+        });
+        bounds_group.addLayer(layer_Unhealthy_6);
+        map.addLayer(layer_Unhealthy_6);
+        function pop_Moderate_7(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    if (typeof layer.closePopup == 'function') {
+                        layer.closePopup();
+                    } else {
+                        layer.eachLayer(function(feature){
+                            feature.closePopup()
+                        });
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var ndviValue = feature.properties['MEAN'] ? parseFloat(feature.properties['MEAN']).toFixed(4) : 'N/A';
+            var popupContent = '<div class="popup-header">🟡 Moderate Stress Status</div>' +
+                            '<table class="popup-table">' +
+                            '<tr>' +
+                            '<td>Classification:</td>' +
+                            '<td><strong>MODERATE STRESS</strong></td>' +
+                            '</tr>' +
+                            '<tr>' +
+                            '<td>Class:</td>' +
+                            '<td>' + (feature.properties['Class'] !== null ? String(feature.properties['Class']).replace(/'/g, '\'').toLocaleString() : 'N/A') + '</td>' +
+                            '</tr>' +
+                            '<tr>' +
+                            '<td>NDVI Value:</td>' +
+                            '<td><strong style="color: #c47600;">' + ndviValue + '</strong></td>' +
+                            '</tr>' +
+                            '<tr>' +
+                            '<td>NDVI Class:</td>' +
+                            '<td>' + (feature.properties['NDVI_Class'] !== null ? String(feature.properties['NDVI_Class']).replace(/'/g, '\'').toLocaleString() : 'N/A') + '</td>' +
+                            '</tr>' +
+                            '<tr>' +
+                            '<td>Confidence:</td>' +
+                            '<td>' + (feature.properties['Confidence'] !== null ? String(feature.properties['Confidence']).replace(/'/g, '\'').toLocaleString() : 'N/A') + '</td>' +
+                            '</tr>' +
+                            '<tr>' +
+                            '<td>Location ID:</td>' +
+                            '<td>' + (feature.properties['OBJECTID_1'] !== null ? String(feature.properties['OBJECTID_1']).replace(/'/g, '\'').toLocaleString() : 'N/A') + '</td>' +
+                            '</tr>' +
+                            '</table>' +
+                            '<div class="popup-status status-moderate" style="margin-top: 8px;">⚠️ Monitoring Needed</div>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_Moderate_7_0() {
+            return {
+                pane: 'pane_Moderate_7',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(211,225,44,1.0)',
+                interactive: true,
+            }
+        }
+        map.createPane('pane_Moderate_7');
+        map.getPane('pane_Moderate_7').style.zIndex = 407;
+        map.getPane('pane_Moderate_7').style['mix-blend-mode'] = 'normal';
+        var layer_Moderate_7 = new L.geoJson(json_Moderate_7, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_Moderate_7',
+            layerName: 'layer_Moderate_7',
+            pane: 'pane_Moderate_7',
+            onEachFeature: pop_Moderate_7,
+            style: style_Moderate_7_0,
+        });
+        bounds_group.addLayer(layer_Moderate_7);
+        map.addLayer(layer_Moderate_7);
+        function pop_Healthy_8(feature, layer) {
+            layer.on({
+                mouseout: function(e) {
+                    if (typeof layer.closePopup == 'function') {
+                        layer.closePopup();
+                    } else {
+                        layer.eachLayer(function(feature){
+                            feature.closePopup()
+                        });
+                    }
+                },
+                mouseover: highlightFeature,
+            });
+            var ndviValue = feature.properties['MEAN'] ? parseFloat(feature.properties['MEAN']).toFixed(4) : 'N/A';
+            var popupContent = '<div class="popup-header">✅ Healthy Status</div>' +
+                            '<table class="popup-table">' +
+                            '<tr>' +
+                            '<td>Classification:</td>' +
+                            '<td><strong>HEALTHY</strong></td>' +
+                            '</tr>' +
+                            '<tr>' +
+                            '<td>Class:</td>' +
+                            '<td>' + (feature.properties['Class'] !== null ? String(feature.properties['Class']).replace(/'/g, '\'').toLocaleString() : 'N/A') + '</td>' +
+                            '</tr>' +
+                            '<tr>' +
+                            '<td>NDVI Value:</td>' +
+                            '<td><strong style="color: #2a5c32;">' + ndviValue + '</strong></td>' +
+                            '</tr>' +
+                            '<tr>' +
+                            '<td>NDVI Class:</td>' +
+                            '<td>' + (feature.properties['NDVI_Class'] !== null ? String(feature.properties['NDVI_Class']).replace(/'/g, '\'').toLocaleString() : 'N/A') + '</td>' +
+                            '</tr>' +
+                            '<tr>' +
+                            '<td>Confidence:</td>' +
+                            '<td>' + (feature.properties['Confidence'] !== null ? String(feature.properties['Confidence']).replace(/'/g, '\'').toLocaleString() : 'N/A') + '</td>' +
+                            '</tr>' +
+                            '<tr>' +
+                            '<td>Location ID:</td>' +
+                            '<td>' + (feature.properties['OBJECTID_1'] !== null ? String(feature.properties['OBJECTID_1']).replace(/'/g, '\'').toLocaleString() : 'N/A') + '</td>' +
+                            '</tr>' +
+                            '</table>' +
+                            '<div class="popup-status status-healthy" style="margin-top: 8px;">✅ Good Condition</div>';
+            var content = removeEmptyRowsFromPopupContent(popupContent, feature);
+			layer.on('popupopen', function(e) {
+				addClassToPopupIfMedia(content, e.popup);
+			});
+			layer.bindPopup(content, { maxHeight: 400 });
+        }
+
+        function style_Healthy_8_0() {
+            return {
+                pane: 'pane_Healthy_8',
+                opacity: 1,
+                color: 'rgba(35,35,35,1.0)',
+                dashArray: '',
+                lineCap: 'butt',
+                lineJoin: 'miter',
+                weight: 1.0, 
+                fill: true,
+                fillOpacity: 1,
+                fillColor: 'rgba(35,231,95,1.0)',
+                interactive: true,
+            }
+        }
+        map.createPane('pane_Healthy_8');
+        map.getPane('pane_Healthy_8').style.zIndex = 408;
+        map.getPane('pane_Healthy_8').style['mix-blend-mode'] = 'normal';
+        var layer_Healthy_8 = new L.geoJson(json_Healthy_8, {
+            attribution: '',
+            interactive: true,
+            dataVar: 'json_Healthy_8',
+            layerName: 'layer_Healthy_8',
+            pane: 'pane_Healthy_8',
+            onEachFeature: pop_Healthy_8,
+            style: style_Healthy_8_0,
+        });
+        bounds_group.addLayer(layer_Healthy_8);
+        map.addLayer(layer_Healthy_8);
+        var overlaysTree = [
+            {label: '<img src="legend/Healthy_8.png" /> Healthy', layer: layer_Healthy_8},
+            {label: '<img src="legend/Moderate_7.png" /> Moderate', layer: layer_Moderate_7},
+            {label: '<img src="legend/Unhealthy_6.png" /> Unhealthy', layer: layer_Unhealthy_6},
+            {label: '<img src="legend/Mid_Stress_5.png" /> Mid_Stress', layer: layer_Mid_Stress_5},
+            {label: '<img src="legend/Severs_Stress_4.png" /> Severs_Stress', layer: layer_Severs_Stress_4},
+            {label: '<img src="legend/Critical_3.png" /> Critical', layer: layer_Critical_3},
+            {label: '<img src="legend/Boundary_2.png" /> Boundary', layer: layer_Boundary_2},
+            {label: "Ratmalagara Estate", layer: layer_RatmalagaraEstate_1},
+            {label: "Google Satellite", layer: layer_GoogleSatellite_0},]
+        var lay = L.control.layers.tree(null, overlaysTree,{
+            //namedToggle: true,
+            //selectorBack: false,
+            //closedSymbol: '&#8862; &#x1f5c0;',
+            //openedSymbol: '&#8863; &#x1f5c1;',
+            //collapseAll: 'Collapse all',
+            //expandAll: 'Expand all',
+            collapsed: false, 
+        });
+        lay.addTo(map);
+		document.addEventListener("DOMContentLoaded", function() {
+            // set new Layers List height which considers toggle icon
+            function newLayersListHeight() {
+                var layerScrollbarElement = document.querySelector('.leaflet-control-layers-scrollbar');
+                if (layerScrollbarElement) {
+                    var layersListElement = document.querySelector('.leaflet-control-layers-list');
+                    var originalHeight = layersListElement.style.height 
+                        || window.getComputedStyle(layersListElement).height;
+                    var newHeight = parseFloat(originalHeight) - 50;
+                    layersListElement.style.height = newHeight + 'px';
+                }
+            }
+            var isLayersListExpanded = true;
+            var controlLayersElement = document.querySelector('.leaflet-control-layers');
+            var toggleLayerControl = document.querySelector('.leaflet-control-layers-toggle');
+            // toggle Collapsed/Expanded and apply new Layers List height
+            toggleLayerControl.addEventListener('click', function() {
+                if (isLayersListExpanded) {
+                    controlLayersElement.classList.remove('leaflet-control-layers-expanded');
+                } else {
+                    controlLayersElement.classList.add('leaflet-control-layers-expanded');
+                }
+                isLayersListExpanded = !isLayersListExpanded;
+                newLayersListHeight()
+            });	
+			// apply new Layers List height if toggle layerstree
+			if (controlLayersElement) {
+				controlLayersElement.addEventListener('click', function(event) {
+					var toggleLayerHeaderPointer = event.target.closest('.leaflet-layerstree-header-pointer span');
+					if (toggleLayerHeaderPointer) {
+						newLayersListHeight();
+					}
+				});
+			}
+            // Collapsed/Expanded at Start to apply new height
+            setTimeout(function() {
+                toggleLayerControl.click();
+            }, 10);
+            setTimeout(function() {
+                toggleLayerControl.click();
+            }, 10);
+            // Collapsed touch/small screen
+            var isSmallScreen = window.innerWidth < 650;
+            if (isSmallScreen) {
+                setTimeout(function() {
+                    controlLayersElement.classList.remove('leaflet-control-layers-expanded');
+                    isLayersListExpanded = !isLayersListExpanded;
+                }, 500);
+            }  
+        });       
+        setBounds();
+        L.ImageOverlay.include({
+            getBounds: function () {
+                return this._bounds;
+            }
+        });
+        </script>        
+    </body>
+</html>

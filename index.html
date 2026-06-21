@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coconut Estate NDVI Dashboard</title>
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            cream:    '#faf6f0',
+            parchment:'#f0e8d8',
+            bark:     '#8b6b42',
+            soil:     '#5c3d1e',
+            leaf:     '#3a7d44',
+            leafDark: '#2a5c32',
+            frond:    '#6abf69',
+            sun:      '#f5a623',
+            amber:    '#e07b2a',
+            mango:    '#d45f1e',
+            stress:   '#c0392b',
+            critical: '#7b1717',
+          },
+          fontFamily: {
+            display: ['"DM Serif Display"', 'serif'],
+            sans:    ['"DM Sans"', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background-color: #faf6f0;
+      background-image:
+        radial-gradient(ellipse at 10% 0%, rgba(106,191,105,0.12) 0%, transparent 60%),
+        radial-gradient(ellipse at 90% 100%, rgba(139,107,66,0.10) 0%, transparent 60%);
+      min-height: 100vh;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .fade-up { animation: fadeUp 0.55s ease both; }
+    .delay-1 { animation-delay: 0.08s; }
+    .delay-2 { animation-delay: 0.16s; }
+    .delay-3 { animation-delay: 0.24s; }
+    .delay-4 { animation-delay: 0.32s; }
+    .delay-6 { animation-delay: 0.48s; }
+    .delay-7 { animation-delay: 0.56s; }
+
+    .stat-card {
+      transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+      cursor: pointer;
+    }
+    .stat-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.12);
+    }
+    .stat-card.active {
+      border-color: #3a7d44 !important;
+      box-shadow: 0 0 0 2px rgba(58,125,68,0.2);
+    }
+
+    @keyframes subtlePulse {
+      0%, 100% { opacity: 0.7; }
+      50%       { opacity: 1;   }
+    }
+    .status-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(58,125,68,0.12); border: 1px solid rgba(58,125,68,0.35);
+      color: #2a5c32; padding: 4px 12px; border-radius: 999px;
+      font-size: 0.78rem; font-weight: 600; letter-spacing: 0.03em;
+    }
+    .status-dot {
+      width: 8px; height: 8px; background: #3a7d44;
+      border-radius: 50%; animation: subtlePulse 1.8s ease-in-out infinite;
+    }
+
+    .progress-bar {
+      height: 6px; border-radius: 999px; background: #e8dece; overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%; border-radius: 999px; transition: width 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .rec-card {
+      border-left: 3px solid; transition: background 0.18s, transform 0.18s;
+    }
+    .rec-card:hover { transform: translateX(4px); }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #f0e8d8; }
+    ::-webkit-scrollbar-thumb { background: #c5a87a; border-radius: 3px; }
+
+    .leaf-divider {
+      display: flex; align-items: center; gap: 10px; margin: 6px 0 14px;
+    }
+    .leaf-divider::before, .leaf-divider::after {
+      content: ''; flex: 1; height: 1px; background: #d8c9b0;
+    }
+
+    .btn-primary {
+      background: #3a7d44; color: white; border: none; padding: 8px 14px;
+      border-radius: 6px; font-size: 0.8rem; font-weight: 600; cursor: pointer;
+      transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 6px;
+    }
+    .btn-primary:hover {
+      background: #2a5c32; box-shadow: 0 4px 12px rgba(42, 92, 50, 0.3); transform: translateY(-2px);
+    }
+    .btn-secondary {
+      background: #f5a623; color: white; border: none; padding: 6px 12px;
+      border-radius: 4px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease;
+    }
+    .btn-secondary:hover { background: #d87e1a; transform: translateY(-1px); }
+
+    /* Tabs Styling */
+    .tab-container {
+      display: flex; gap: 8px; border-bottom: 2px solid #e8dece; margin-bottom: 16px; overflow-x: auto;
+    }
+    .tab-btn {
+      background: none; border: none; padding: 12px 16px; font-size: 0.85rem;
+      font-weight: 600; color: #8b6b42; cursor: pointer; border-bottom: 3px solid transparent;
+      transition: all 0.2s ease; white-space: nowrap;
+    }
+    .tab-btn:hover, .tab-btn.active { color: #3a7d44; border-bottom-color: #3a7d44; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; animation: fadeUp 0.3s ease; }
+
+    .filter-badge {
+      display: inline-block; padding: 6px 12px; margin: 4px; border-radius: 999px;
+      background: #e8dece; color: #5c3d1e; font-size: 0.75rem; font-weight: 600;
+      cursor: pointer; transition: all 0.2s ease; border: 2px solid transparent;
+    }
+    .filter-badge:hover { background: #d8c9b0; transform: scale(1.05); }
+    .filter-badge.active { background: #3a7d44; color: white; border-color: #2a5c32; }
+
+    /* Modal Styling */
+    .modal {
+      display: none; position: fixed; z-index: 1000; left: 0; top: 0;
+      width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); animation: fadeUp 0.3s ease;
+    }
+    .modal.active { display: flex; align-items: center; justify-content: center; }
+    .modal-content {
+      background: white; border-radius: 12px; max-width: 600px; width: 90%;
+      max-height: 80vh; overflow-y: auto; box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 2px solid #e8dece; }
+    .modal-body { padding: 20px; }
+    .modal-close { background: none; border: none; font-size: 24px; cursor: pointer; color: #8b6b42; }
+
+    .expandable-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px; background: #f9f5f0; border-radius: 6px; cursor: pointer;
+      transition: all 0.2s ease; user-select: none;
+    }
+    .expandable-header:hover { background: #f0e8d8; }
+    .expandable-header.active { background: #e4f5e6; color: #2a5c32; }
+    .expand-icon { transition: transform 0.2s ease; }
+    .expand-icon.active { transform: rotate(180deg); }
+    .expandable-content {
+      display: none; padding: 12px; background: #fafaf8; border-radius: 0 0 6px 6px;
+    }
+    .expandable-content.active { display: block; }
+  </style>
+</head>
+
+<body class="min-h-screen pb-10">
+
+  <header class="fade-up" style="background: linear-gradient(135deg, #2a5c32 0%, #3a7d44 60%, #4a9354 100%); box-shadow: 0 4px 24px rgba(42,92,50,0.25);">
+    <div class="max-w-6xl mx-auto px-4 py-5 sm:py-6">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div class="flex items-center gap-4">
+          <div class="flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center" style="background: rgba(255,255,255,0.15); backdrop-filter: blur(6px);">
+            <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M14 24V13" stroke="white" stroke-width="2" stroke-linecap="round"></path>
+              <path d="M14 13C14 13 8 10 7 5C10 5 14 9 14 13Z" fill="white" opacity="0.9"></path>
+              <path d="M14 13C14 13 20 10 21 5C18 5 14 9 14 13Z" fill="white" opacity="0.9"></path>
+              <circle cx="14" cy="25" r="1.5" fill="white" opacity="0.5"></circle>
+            </svg>
+          </div>
+          <div>
+            <h1 class="font-display text-white text-xl sm:text-2xl leading-tight">Ratmalagara Coconut Estate</h1>
+            <p class="text-green-200 text-xs sm:text-sm mt-0.5 font-sans font-light">Kurunegala District · Sector B</p>
+          </div>
+        </div>
+        <div class="flex flex-col sm:items-end gap-2">
+          <div class="status-pill" style="background:rgba(255,255,255,0.18); border-color:rgba(255,255,255,0.45); color:white;">
+            <span class="status-dot" style="background:white;"></span>
+            Analysis Complete
+          </div>
+          <p class="text-green-100 text-xs font-sans">
+            📅 &nbsp;Survey Date: <strong> February 2026</strong> &nbsp;|&nbsp; Processed: 05 May 2026
+          </p>
+        </div>
+      </div>
+
+      <div class="mt-4 rounded-xl px-4 py-3 flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6" style="background: rgba(0,0,0,0.18); backdrop-filter: blur(4px);">
+        <p class="text-white text-sm font-semibold">📋 Quick Summary:</p>
+        <p class="text-green-100 text-xs sm:text-sm leading-relaxed">
+          Out of <strong class="text-white">10,192</strong> trees surveyed, <strong class="text-white">3,863</strong> are healthy. 
+          <strong class="text-yellow-200">4,336</strong> trees need monitoring and 
+          <strong class="text-red-200">1,998</strong> trees require <em>immediate attention</em>.
+        </p>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 mt-7 space-y-7">
+
+    <div class="fade-up rounded-2xl p-5 bg-white shadow-sm border border-parchment">
+      <div class="flex items-center gap-2 mb-3">
+        <span class="text-lg">🔍</span>
+        <h3 class="font-semibold text-soil">Quick Filter by Health Status</h3>
+      </div>
+      <div id="filterContainer">
+        <div class="filter-badge active" data-filter="all">🎯 All Trees</div>
+        <div class="filter-badge" data-filter="healthy">✅ Healthy (3,863)</div>
+        <div class="filter-badge" data-filter="moderate">⚠️ Moderate (4,336)</div>
+        <div class="filter-badge" data-filter="unhealthy">🚨 Unhealthy (1,998)</div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="stat-card fade-up delay-1 col-span-2 lg:col-span-1 rounded-2xl p-5 bg-white shadow-sm border border-parchment" data-stat="all">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-semibold uppercase tracking-widest text-bark">Total Trees</span>
+          <span class="text-2xl">🌴</span>
+        </div>
+        <p class="font-display text-5xl text-soil" id="totalCount">10,197</p>
+        <p class="text-xs text-bark mt-2">Full estate coverage</p>
+        <div class="progress-bar mt-3"><div class="progress-fill" style="width: 100%; background: #8b6b42;"></div></div>
+      </div>
+
+      <div class="stat-card fade-up delay-2 rounded-2xl p-5 shadow-sm border" style="background: linear-gradient(145deg, #f0faf1, #e4f5e6); border-color: #b7dcba;" data-stat="healthy">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-semibold uppercase tracking-widest text-emerald-800">Healthy</span>
+          <span class="text-2xl">✅</span>
+        </div>
+        <p class="font-display text-5xl text-emerald-700" id="healthyCount">3,863</p>
+        <p class="text-xs mt-2 text-emerald-600">37.9% of estate</p>
+        <div class="progress-bar mt-3"><div class="progress-fill" style="width: 37.9%; background: #3a7d44;"></div></div>
+      </div>
+
+      <div class="stat-card fade-up delay-3 rounded-2xl p-5 shadow-sm border" style="background: linear-gradient(145deg, #fefaf0, #fdf0d5); border-color: #f5d89a;" data-stat="moderate">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-semibold uppercase tracking-widest text-amber-800">Moderate</span>
+          <span class="text-2xl">⚠️</span>
+        </div>
+        <p class="font-display text-5xl text-amber-600" id="moderateCount">4,336</p>
+        <p class="text-xs mt-2 text-amber-700">42.5% — monitor closely</p>
+        <div class="progress-bar mt-3"><div class="progress-fill" style="width: 42.5%; background: #f5a623;"></div></div>
+      </div>
+
+      <div class="stat-card fade-up delay-4 rounded-2xl p-5 shadow-sm border" style="background: linear-gradient(145deg, #fdf1f0, #fde0dd); border-color: #f5b0aa;" data-stat="unhealthy">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-semibold uppercase tracking-widest text-red-800">Unhealthy</span>
+          <span class="text-2xl">🚨</span>
+        </div>
+        <p class="font-display text-5xl text-red-600" id="unhealthyCount">1,998</p>
+        <p class="text-xs mt-2 text-red-700">19.5% — urgent action needed</p>
+        <div class="progress-bar mt-3"><div class="progress-fill" style="width: 19.5%; background: #c0392b;"></div></div>
+      </div>
+    </div>
+
+    <div class="fade-up rounded-2xl p-5 bg-white shadow-sm border border-parchment">
+      <div class="tab-container">
+        <button class="tab-btn active" data-tab="map-view">🗺️ Estate Map View</button>
+        <button class="tab-btn" data-tab="health-breakdown">📊 Detailed Health Breakdown</button>
+        <button class="tab-btn" data-tab="details">📋 Detailed Breakdown</button>
+      </div>
+
+      <div id="map-view" class="tab-content active">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+          <div>
+            <h2 class="font-display text-soil text-lg">NDVI Satellite Map</h2>
+            <p class="text-xs text-bark mt-0.5">Interactive map with real-time health indicators • Click features for details</p>
+          </div>
+          <button class="btn-primary" onclick="window.open('./qgis2web_2026_05_18-14_42_39_257126/indexCoconut.html', '_blank')">
+            <span>🗺️</span>
+            <span>Open Full Map</span>
+          </button>
+        </div>
+
+        <div style="margin-bottom: 12px;">
+          <p class="text-xs font-semibold text-bark mb-2">Map Legend:</p>
+          <div class="flex flex-wrap gap-2">
+            <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full font-medium text-xs" style="background:#e4f5e6; color:#2a5c32;">● Healthy (NDVI 0.6-1.0)</span>
+            <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full font-medium text-xs" style="background:#fdf0d5; color:#c47600;">● Moderate (NDVI 0.4-0.6)</span>
+            <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full font-medium text-xs" style="background:#fde0dd; color:#c0392b;">● Unhealthy (NDVI 0.0-0.4)</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <div class="lg:col-span-3 rounded-xl overflow-hidden shadow-sm border border-parchment bg-white">
+            <iframe src="./qgis2web_2026_05_18-14_42_39_257126/indexCoconut.html" style="width: 100%; height: 450px; border: none; border-radius: 0;" title="Interactive NDVI Estate Map"></iframe>
+          </div>
+        </div>
+      </div>
+
+      <div id="health-breakdown" class="tab-content">
+        <h3 class="font-display text-soil text-lg mb-4">Overall Estate Health Overview</h3>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center bg-cream/40 p-6 rounded-xl border border-parchment">
+          
+          <div style="position: relative; width: 100%; height: 320px; margin: 0 auto;">
+            <canvas id="overallHealthDonut"></canvas>
+          </div>
+
+          <div class="space-y-4">
+            
+            <div class="p-4 rounded-xl shadow-sm border bg-white cursor-pointer hover:scale-[1.02] transition-transform duration-200" style="border-left: 4px solid #3a7d44;">
+              <div class="flex items-center justify-between mb-1">
+                <div class="flex items-center gap-2">
+                  <span class="w-4 h-4 rounded-full" style="background:#3a7d44;"></span>
+                  <span class="font-bold text-base" style="color:#2a5c32;">Healthy</span>
+                </div>
+                <span class="font-display text-2xl" style="color:#2a5c32;">3,863</span>
+              </div>
+              <p class="text-xs text-bark ml-6">37.9% of estate</p>
+            </div>
+
+            <div class="p-4 rounded-xl shadow-sm border bg-white cursor-pointer hover:scale-[1.02] transition-transform duration-200" style="border-left: 4px solid #f5a623;">
+              <div class="flex items-center justify-between mb-1">
+                <div class="flex items-center gap-2">
+                  <span class="w-4 h-4 rounded-full" style="background:#f5a623;"></span>
+                  <span class="font-bold text-base" style="color:#c47600;">Moderate</span>
+                </div>
+                <span class="font-display text-2xl" style="color:#c47600;">4,336</span>
+              </div>
+              <p class="text-xs text-bark ml-6">42.5% — monitor closely</p>
+            </div>
+
+            <div class="p-4 rounded-xl shadow-sm border bg-white cursor-pointer hover:scale-[1.02] transition-transform duration-200" style="border-left: 4px solid #c0392b;">
+              <div class="flex items-center justify-between mb-1">
+                <div class="flex items-center gap-2">
+                  <span class="w-4 h-4 rounded-full" style="background:#c0392b;"></span>
+                  <span class="font-bold text-base" style="color:#9a1c1c;">Unhealthy</span>
+                </div>
+                <span class="font-display text-2xl" style="color:#c0392b;">1,998</span>
+              </div>
+              <p class="text-xs text-bark ml-6">19.5% — urgent action needed</p>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <div id="details" class="tab-content">
+        <h3 class="font-display text-soil text-lg mb-4">Detailed Health Recommendations</h3>
+        <div class="space-y-2">
+          <div class="expandable-header" onclick="toggleExpandable(this)">
+            <div class="flex items-center gap-2">
+              <span>✅ Healthy Trees (3,863)</span>
+              <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">37.9%</span>
+            </div>
+            <span class="expand-icon">▼</span>
+          </div>
+          <div class="expandable-content">
+            <div class="text-sm text-soil space-y-2">
+              <p><strong>NDVI Range:</strong> 0.6 - 1.0</p>
+              <p><strong>Status:</strong> Vigorous, well-maintained vegetation</p>
+              <p><strong>Recommended Action:</strong> Continue regular maintenance schedule</p>
+              <ul class="text-xs space-y-1 mt-2 ml-4">
+                <li>✓ Maintain irrigation schedule</li>
+                <li>✓ Apply routine fertilizer (NPK 12-12-17)</li>
+                <li>✓ Regular pest monitoring</li>
+                <li>✓ Next survey in 12 weeks</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="expandable-header" onclick="toggleExpandable(this)">
+            <div class="flex items-center gap-2">
+              <span>⚠️ Moderate Stress Trees (4,336)</span>
+              <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">42.5%</span>
+            </div>
+            <span class="expand-icon">▼</span>
+          </div>
+          <div class="expandable-content">
+            <div class="text-sm text-soil space-y-2">
+              <p><strong>NDVI Range:</strong> 0.4 - 0.6</p>
+              <p><strong>Status:</strong> Some stress visible, intervention recommended</p>
+              <p><strong>Recommended Action:</strong> Enhanced monitoring & treatment</p>
+              <ul class="text-xs space-y-1 mt-2 ml-4">
+                <li>🌱 Increase irrigation frequency</li>
+                <li>💧 Apply targeted fertilizer boost</li>
+                <li>🔍 Check for pest/disease signs</li>
+                <li>📅 Re-assess in 6 weeks</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="expandable-header" onclick="toggleExpandable(this)">
+            <div class="flex items-center gap-2">
+              <span>🚨 Unhealthy Trees (1,998)</span>
+              <span class="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">19.5%</span>
+            </div>
+            <span class="expand-icon">▼</span>
+          </div>
+          <div class="expandable-content">
+            <div class="text-sm text-soil space-y-2">
+              <p><strong>NDVI Range:</strong> 0.0 - 0.4</p>
+              <p><strong>Status:</strong> Critical condition, immediate action needed</p>
+              <p><strong>Recommended Action:</strong> Urgent intervention required</p>
+              <ul class="text-xs space-y-1 mt-2 ml-4">
+                <li>💉 Trunk injection with pest control</li>
+                <li>🌿 Apply magnesium sulphate treatment</li>
+                <li>🪲 Full disease assessment</li>
+                <li>⚡ On-site visit by agronomist within 2 weeks</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-5 gap-5">
+      <div class="fade-up delay-6 lg:col-span-3 rounded-2xl p-5 bg-white shadow-sm border border-parchment flex flex-col">
+        <div>
+          <h2 class="font-display text-soil text-lg">Unhealthy Tree Breakdown</h2>
+          <p class="text-xs text-bark mt-0.5">1998 trees need treatment — categorized by severity</p>
+        </div>
+        <div class="leaf-divider mt-3"></div>
+        <div style="position: relative; width: 100%; height: 350px; margin: 0 auto;">
+          <canvas id="breakdownChart" style="width: 100% !important; height: 100% !important;"></canvas>
+        </div>
+        <div class="mt-4 space-y-2">
+          <div class="flex items-center justify-between text-sm">
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full flex-shrink-0" style="background:#e07b2a;"></span>
+              <span class="text-soil font-medium">Mild Stress (Treatable)</span>
+            </div>
+            <div class="text-right">
+              <span class="font-semibold text-amber-700">1178</span>
+              <span class="text-bark text-xs ml-1">(58.9%)</span>
+            </div>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width: 58.9%; background: rgb(224, 123, 42);"></div></div>
+
+          <div class="flex items-center justify-between text-sm mt-1">
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full flex-shrink-0" style="background:#c0392b;"></span>
+              <span class="text-soil font-medium">Severe Stress (Critical)</span>
+            </div>
+            <div class="text-right">
+              <span class="font-semibold" style="color:#c0392b;">683</span>
+              <span class="text-bark text-xs ml-1">(34.1%)</span>
+            </div>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width: 34.1%; background: rgb(192, 57, 43);"></div></div>
+
+          <div class="flex items-center justify-between text-sm mt-1">
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full flex-shrink-0" style="background:#7b1717;"></span>
+              <span class="text-soil font-medium">Critical / Dead</span>
+            </div>
+            <div class="text-right">
+              <span class="font-semibold" style="color:#7b1717;">137</span>
+              <span class="text-bark text-xs ml-1">(6.8%)</span>
+            </div>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width: 6.8%; background: rgb(123, 23, 23);"></div></div>
+        </div>
+      </div>
+
+      <div class="fade-up delay-6 lg:col-span-2 rounded-2xl p-5 bg-white shadow-sm border border-parchment">
+        <h2 class="font-display text-soil text-lg mb-1">Quick Actions</h2>
+        <p class="text-xs text-bark mb-4">Essential tasks for your estate</p>
+        <div class="space-y-2">
+          <button class="btn-primary" style="width: 100%;" onclick="downloadReport()">
+            <span>📊</span>
+            <span>Generate Report</span>
+          </button>
+          <button class="btn-secondary" style="width: 100%; background: #8b6b42; color: white;" onclick="openModal('contactModal')">
+            <span>📞</span>
+            <span>Contact Support</span>
+          </button>
+        </div>
+        <div class="leaf-divider mt-4"></div>
+        <h3 class="font-semibold text-soil text-sm mb-2">Recent Metrics</h3>
+        <div class="text-xs text-bark space-y-1">
+          <p>📈 Last Updated: May 18, 2026</p>
+          <p>📍 Survey Method: Drone NDVI imaging</p>
+          <p>🎯 Coverage: 100% of estate</p>
+          <p>⚡ Response Time: 24-48 hours recommended for critical trees</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="fade-up delay-7 rounded-2xl p-5 bg-white shadow-sm border border-parchment">
+      <h2 class="font-display text-soil text-lg mb-1">What Does NDVI Mean?</h2>
+      <p class="text-xs text-bark mb-4">NDVI (Normalized Difference Vegetation Index) measures how green and vigorous your trees are. Higher = healthier.</p>
+      <div class="relative rounded-xl overflow-hidden h-7" style="background: linear-gradient(to right, #7b1717, #c0392b, #e07b2a, #f5c842, #6abf69, #3a7d44);">
+        <div class="absolute inset-0 flex items-center justify-between px-3 text-white text-xs font-semibold" style="text-shadow: 0 1px 3px rgba(0,0,0,0.6);">
+          <span>Dead</span><span>Critical</span><span>Severe</span><span>Mild</span><span>Moderate</span><span>Healthy</span>
+        </div>
+      </div>
+      <div class="flex justify-between text-xs text-bark mt-1 px-1">
+        <span>NDVI: 0.0</span><span>0.2</span><span>0.4</span><span>0.6</span><span>0.8</span><span>1.0</span>
+      </div>
+    </div>
+
+    <div class="fade-up delay-7 rounded-2xl p-5 bg-white shadow-sm border border-parchment">
+      <div class="flex items-center gap-3 mb-1">
+        <span class="text-2xl">💊</span>
+        <div>
+          <h2 class="font-display text-soil text-lg">Recommended Action Plan</h2>
+          <p class="text-xs text-bark">Based on your NDVI results — follow these steps by tree type</p>
+        </div>
+      </div>
+      <div class="leaf-divider"></div>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-1">
+        <div class="rec-card rounded-xl p-4" style="border-color:#e07b2a; background:#fff8f0;">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="w-3 h-3 rounded-full flex-shrink-0" style="background:#e07b2a;"></span>
+            <span class="font-semibold text-sm" style="color:#b05c10;">1178 Trees — Mild Stress</span>
+          </div>
+          <ul class="text-xs text-soil space-y-1.5 leading-relaxed">
+            <li>🌱 Apply <strong>NPK 12-12-17</strong> fertilizer (500g/tree)</li>
+            <li>💧 Ensure adequate irrigation — 200L/tree/week</li>
+            <li>🔍 Inspect for early signs of Rhinoceros Beetle</li>
+            <li>📅 Re-survey in <strong>6 weeks</strong></li>
+          </ul>
+        </div>
+        <div class="rec-card rounded-xl p-4" style="border-color:#c0392b; background:#fff2f1;">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="w-3 h-3 rounded-full flex-shrink-0" style="background:#c0392b;"></span>
+            <span class="font-semibold text-sm" style="color:#9a1c1c;">683 Trees — Severe Stress</span>
+          </div>
+          <ul class="text-xs text-soil space-y-1.5 leading-relaxed">
+            <li>💉 Trunk injection with <strong>Imidacloprid</strong> for pest control</li>
+            <li>🌿 Apply <strong>Magnesium Sulphate</strong> (200g) for nutrient boost</li>
+            <li>🪲 Check roots for <strong>Coconut Root Wilt</strong> disease</li>
+            <li>📅 Field visit by agronomist within <strong>2 weeks</strong></li>
+          </ul>
+        </div>
+        <div class="rec-card rounded-xl p-4" style="border-color:#7b1717; background:#fff0f0;">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="w-3 h-3 rounded-full flex-shrink-0" style="background:#7b1717;"></span>
+            <span class="font-semibold text-sm" style="color:#7b1717;">137 Trees — Critical / Dead</span>
+          </div>
+          <ul class="text-xs text-soil space-y-1.5 leading-relaxed">
+            <li>🪓 Remove dead trees <strong>immediately</strong> to prevent disease spread</li>
+            <li>🧪 Soil test the affected area before replanting</li>
+            <li>🌱 Replant with disease-resistant <strong>CRISL Dwarf</strong> variety</li>
+            <li>📋 Report to local <strong>Coconut Development Authority</strong></li>
+          </ul>
+        </div>
+      </div>
+      <div class="mt-4 rounded-xl p-3 flex items-start gap-3" style="background:#fffbeb; border: 1px solid #fde68a;">
+        <span class="text-xl flex-shrink-0">☀️</span>
+        <p class="text-xs text-yellow-800 leading-relaxed">
+          <strong>Best time to apply treatments:</strong> Early morning (6–9 AM) or late afternoon (4–6 PM). Avoid applying fertilizers during heavy rain. Always wear gloves and follow product label instructions.
+        </p>
+      </div>
+    </div>
+
+    <div class="text-center text-xs text-bark pt-2 pb-4">
+      <p>Generated by <strong>AgriSense Drone Analytics</strong> · NDVI Dashboard v2.0 · Data collected via DJI Phantom 4 Multispectral</p>
+      <p class="mt-1 opacity-60">For field support, contact your local Coconut Development Authority office.</p>
+      <p class="mt-1 opacity-60">Coconut Research Institute Lunuwila 2026.</p>
+    </div>
+
+  </main>
+
+  <div id="reportModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="font-display text-soil">Generate NDVI Report</h2>
+        <button class="modal-close" onclick="closeModal('reportModal')">✕</button>
+      </div>
+      <div class="modal-body space-y-4">
+        <div>
+          <label class="block text-sm font-semibold text-soil mb-2">Report Type</label>
+          <select style="width: 100%; padding: 8px; border: 1px solid #d8c9b0; border-radius: 6px; font-size: 0.9rem;">
+            <option>📊 Full Estate Summary</option>
+            <option>🚨 Critical Trees Only</option>
+            <option>⚠️ Action Required (Moderate + Unhealthy)</option>
+            <option>📈 Health Trend Analysis</option>
+            <option>🗓️ Scheduled Survey Report</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-soil mb-2">Format</label>
+          <div class="flex gap-2">
+            <button class="btn-secondary" style="flex: 1; background: #3a7d44;">📄 PDF</button>
+            <button class="btn-secondary" style="flex: 1; background: #8b6b42;">📊 Excel</button>
+            <button class="btn-secondary" style="flex: 1; background: #f5a623;">📧 Email</button>
+          </div>
+        </div>
+        <button class="btn-primary" style="width: 100%; padding: 10px;" onclick="alert('Report generated and will be sent to your email!')">
+          Generate & Send Report
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="contactModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="font-display text-soil">📞 Call Us</h2>
+        <button class="modal-close" onclick="closeModal('contactModal')">✕</button>
+      </div>
+      <div class="modal-body space-y-4">
+        <div class="rec-card rounded-xl p-4" style="border-color:#3a7d44; background:#f0faf1; border-left: 4px solid;">
+          <div class="text-sm text-soil space-y-3">
+            <div>
+              <p class="font-semibold text-base mb-1">Main Office</p>
+              <p class="text-lg font-bold" style="color: #3a7d44;">+94 31 2255841</p>
+            </div>
+            <div>
+              <p class="font-semibold mb-1">Fax</p>
+              <p class="text-lg font-bold" style="color: #8b6b42;">+94 31 2257391</p>
+            </div>
+            <div class="leaf-divider"></div>
+            <div>
+              <p class="font-semibold mb-2">Business Hours</p>
+              <p class="text-sm">📅 <strong>Mon - Fri</strong></p>
+              <p class="text-sm">⏰ <strong>8:30 AM - 4:15 PM</strong></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="statsModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="font-display text-soil">Detailed Statistics</h2>
+        <button class="modal-close" onclick="closeModal('statsModal')">✕</button>
+      </div>
+      <div class="modal-body space-y-3">
+        <div class="p-3 bg-gray-50 rounded-lg">
+          <p class="text-xs font-semibold text-bark mb-1">Total Trees Analyzed</p>
+          <p class="text-2xl font-bold text-soil">10,197</p>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="p-3 bg-green-50 rounded-lg">
+            <p class="text-xs font-semibold text-green-800">Healthy</p>
+            <p class="text-xl font-bold text-green-700">3,863 (37.9%)</p>
+          </div>
+          <div class="p-3 bg-yellow-50 rounded-lg">
+            <p class="text-xs font-semibold text-yellow-800">Moderate</p>
+            <p class="text-xl font-bold text-yellow-700">4,336 (42.5%)</p>
+          </div>
+          <div class="p-3 bg-red-50 rounded-lg">
+            <p class="text-xs font-semibold text-red-800">Unhealthy</p>
+            <p class="text-xl font-bold text-red-700">1,998 (19.6%)</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+      // ── Tab functionality
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+          document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+          
+          btn.classList.add('active');
+          const tabId = btn.getAttribute('data-tab');
+          document.getElementById(tabId).classList.add('active');
+        });
+      });
+
+      // ── Filter functionality
+      document.querySelectorAll('.filter-badge').forEach(badge => {
+        badge.addEventListener('click', () => {
+          document.querySelectorAll('.filter-badge').forEach(b => b.classList.remove('active'));
+          badge.classList.add('active');
+          
+          const filter = badge.getAttribute('data-filter');
+          if (window.parent !== window) {
+            window.parent.postMessage({type: 'filter', value: filter}, '*');
+          }
+        });
+      });
+
+      // ── Stat card click handlers
+      document.querySelectorAll('.stat-card').forEach(card => {
+        card.addEventListener('click', () => {
+          const stat = card.getAttribute('data-stat');
+          document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('active'));
+          card.classList.add('active');
+          
+          const filterBtn = document.querySelector(`.filter-badge[data-filter="${stat}"]`) || 
+                            document.querySelector(`.filter-badge[data-filter="all"]`);
+          if (filterBtn) {
+            filterBtn.click();
+          }
+        });
+      });
+
+      // ── NEW Overall Health Donut Chart 
+      try {
+        const donutCanvas = document.getElementById('overallHealthDonut');
+        if (donutCanvas && typeof Chart !== 'undefined') {
+          const ctxDonut = donutCanvas.getContext('2d');
+          new Chart(ctxDonut, {
+            type: 'doughnut',
+            data: {
+              labels: ['Healthy', 'Moderate', 'Unhealthy'],
+              datasets: [{
+                data: [3863, 4336, 1998],
+                backgroundColor: ['#3a7d44', '#f5a623', '#c0392b'],
+                borderColor: ['#ffffff', '#ffffff', '#ffffff'],
+                borderWidth: 2,
+                hoverOffset: 8,
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              cutout: '70%',
+              plugins: {
+                legend: {
+                  display: false
+                },
+                tooltip: {
+                  backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                  padding: 12,
+                  cornerRadius: 8,
+                  callbacks: {
+                    label: function(context) {
+                      const value = context.raw;
+                      const total = 10197;
+                      const percentage = ((value / total) * 100).toFixed(1);
+                      return ` ${context.label}: ${value.toLocaleString()} trees (${percentage}%)`;
+                    }
+                  }
+                }
+              },
+              animation: {
+                animateRotate: true,
+                duration: 1200,
+                easing: 'easeInOutQuart'
+              }
+            },
+            plugins: [{
+              id: 'centerTextOverall',
+              beforeDraw: function(chart) {
+                const width = chart.width,
+                      height = chart.height,
+                      ctx = chart.ctx;
+                ctx.restore();
+                const fontSize = (height / 114).toFixed(2);
+                ctx.font = "bold " + fontSize + "em 'DM Serif Display', serif";
+                ctx.textBaseline = "middle";
+                ctx.fillStyle = "#5c3d1e";
+
+                const text = "10,197",
+                      textX = Math.round((width - ctx.measureText(text).width) / 2),
+                      textY = height / 2 - 10;
+                ctx.fillText(text, textX, textY);
+
+                ctx.font = "500 " + (fontSize * 0.35) + "em 'DM Sans', sans-serif";
+                ctx.fillStyle = "#8b6b42";
+                const subText = "Total Trees";
+                const subTextX = Math.round((width - ctx.measureText(subText).width) / 2);
+                ctx.fillText(subText, subTextX, height / 2 + 18);
+                ctx.save();
+              }
+            }]
+          });
+        }
+      } catch(e) {
+        console.error('Error creating overall health donut chart:', e);
+      }
+
+      // ── Breakdown Bar Chart (Unhealthy Trees)
+      try {
+        const canvas = document.getElementById('breakdownChart');
+        if (canvas && typeof Chart !== 'undefined') {
+          const ctx = canvas.getContext('2d');
+          new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: ['Mild Stress\\n(Treatable)', 'Severe Stress\\n(Critical)', 'Critical / Dead'],
+              datasets: [{
+                label: 'Number of Trees',
+                data: [1178, 683, 137], 
+                backgroundColor: ['#e07b2a', '#c0392b', '#7b1717'],
+                borderColor: ['#d68000', '#a02020', '#5c0f0f'],
+                borderWidth: 2,
+                borderRadius: 6
+              }]
+            },
+            options: {
+              indexAxis: 'y', 
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: {
+                  display: false
+                },
+                tooltip: {
+                  backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                  padding: 12,
+                  cornerRadius: 6,
+                  callbacks: {
+                    label: function(context) {
+                      const value = context.raw;
+                      const total = 1998;
+                      const percentage = ((value / total) * 100).toFixed(1);
+                      return `${value} trees (${percentage}%)`;
+                    }
+                  }
+                }
+              },
+              scales: {
+                x: {
+                  beginAtZero: true,
+                  max: 1300
+                },
+                y: {
+                  ticks: {
+                    padding: 10
+                  }
+                }
+              }
+            }
+          });
+        }
+      } catch(e) {
+        console.error('Error creating bar chart:', e);
+      }
+
+      // ── Animate progress bars on load
+      const fills = document.querySelectorAll('.progress-fill');
+      setTimeout(() => {
+        fills.forEach(el => {
+          const w = el.style.width;
+          el.style.width = '0';
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => { el.style.width = w; });
+          });
+        });
+      }, 200);
+
+    }); // End of DOMContentLoaded
+
+    function openModal(modalId) {
+      const modal = document.getElementById(modalId);
+      if (modal) { modal.classList.add('active'); }
+    }
+
+    function closeModal(modalId) {
+      const modal = document.getElementById(modalId);
+      if (modal) { modal.classList.remove('active'); }
+    }
+
+    function downloadReport() {
+      const timestamp = new Date().toISOString().split('T')[0];
+      
+      // Get the existing live charts as images to avoid blank spaces in PDF
+      const donutCanvas = document.getElementById('overallHealthDonut');
+      const breakdownCanvas = document.getElementById('breakdownChart');
+      
+      const donutImgSrc = donutCanvas ? donutCanvas.toDataURL('image/png') : '';
+      const breakdownImgSrc = breakdownCanvas ? breakdownCanvas.toDataURL('image/png') : '';
+      
+      // Create a clean off-screen printable report container
+      const printArea = document.createElement('div');
+      printArea.style.padding = '35px 30px';
+      printArea.style.fontFamily = "'DM Sans', sans-serif";
+      printArea.style.color = '#5c3d1e';
+      printArea.style.backgroundColor = '#faf6f0';
+      
+      printArea.innerHTML = `
+        <div style="padding: 24px; background: linear-gradient(135deg, #2a5c32 0%, #3a7d44 100%); border-radius: 12px; margin-bottom: 30px; color: white; box-shadow: 0 4px 15px rgba(42,92,50,0.15);">
+          <h1 style="font-family: 'DM Serif Display', serif; font-size: 28px; margin: 0; font-weight: normal; letter-spacing: 0.02em;">Ratmalagara Coconut Estate</h1>
+          <p style="font-size: 14px; margin: 4px 0 0 0; opacity: 0.9; font-weight: 300;">NDVI Estate Health Analytics Report</p>
+          <div style="margin-top: 20px; font-size: 12px; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 12px; display: flex; justify-content: space-between;">
+            <span>📍 Kurunegala District · Sector B</span>
+            <span>📅 Survey: Feb 2026 &nbsp;|&nbsp; Generated: ${timestamp}</span>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 35px; background: white; padding: 25px; border-radius: 12px; border: 1px solid #f0e8d8; page-break-inside: avoid;">
+          <h2 style="font-family: 'DM Serif Display', serif; color: #2a5c32; font-size: 19px; margin-top: 0; margin-bottom: 6px; font-weight: normal; border-bottom: 2px solid #3a7d44; padding-bottom: 6px;">1. Overall Estate Health Overview</h2>
+          <p style="font-size: 13px; color: #8b6b42; margin-bottom: 20px; margin-top: 0;">Comprehensive snapshot of all 10,192 coconut trees evaluated using drone multi-spectral index tracking.</p>
+          
+          <div style="text-align: center; margin: 25px 0;">
+            ${donutImgSrc ? `<img src="${donutImgSrc}" style="max-height: 220px; margin: 0 auto; display: block;" />` : '<p style="color:#c0392b; font-size: 13px;">[Chart Rendering Exception]</p>'}
+          </div>
+
+          <table style="width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 13px;">
+            <thead>
+              <tr style="background-color: #f5f0e6; text-align: left; color: #5c3d1e;">
+                <th style="padding: 10px 12px; border: 1px solid #d8c9b0; font-weight: 600;">Health Category</th>
+                <th style="padding: 10px 12px; border: 1px solid #d8c9b0; font-weight: 600; text-align: right;">Tree Count</th>
+                <th style="padding: 10px 12px; border: 1px solid #d8c9b0; font-weight: 600; text-align: right;">Percentage Allocation</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="padding: 10px 12px; border: 1px solid #d8c9b0; color: #2a5c32; font-weight: bold;">✅ Healthy (NDVI 0.6 - 1.0)</td>
+                <td style="padding: 10px 12px; border: 1px solid #d8c9b0; text-align: right; font-weight: 500;">3,863</td>
+                <td style="padding: 10px 12px; border: 1px solid #d8c9b0; text-align: right; color: #2a5c32; font-weight: 600;">37.9%</td>
+              </tr>
+              <tr>
+                <td style="padding: 10px 12px; border: 1px solid #d8c9b0; color: #e07b2a; font-weight: bold;">⚠️ Moderate Stress (NDVI 0.4 - 0.6)</td>
+                <td style="padding: 10px 12px; border: 1px solid #d8c9b0; text-align: right; font-weight: 500;">4,336</td>
+                <td style="padding: 10px 12px; border: 1px solid #d8c9b0; text-align: right; color: #e07b2a; font-weight: 600;">42.5%</td>
+              </tr>
+              <tr>
+                <td style="padding: 10px 12px; border: 1px solid #d8c9b0; color: #c0392b; font-weight: bold;">🚨 Unhealthy (NDVI 0.0 - 0.4)</td>
+                <td style="padding: 10px 12px; border: 1px solid #d8c9b0; text-align: right; font-weight: 500;">1,998</td>
+                <td style="padding: 10px 12px; border: 1px solid #d8c9b0; text-align: right; color: #c0392b; font-weight: 600;">19.5%</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div style="margin-bottom: 35px; background: white; padding: 25px; border-radius: 12px; border: 1px solid #f0e8d8; page-break-inside: avoid;">
+          <h2 style="font-family: 'DM Serif Display', serif; color: #2a5c32; font-size: 19px; margin-top: 0; margin-bottom: 6px; font-weight: normal; border-bottom: 2px solid #3a7d44; padding-bottom: 6px;">2. Unhealthy Tree Breakdown</h2>
+          <p style="font-size: 13px; color: #8b6b42; margin-bottom: 20px; margin-top: 0;">Granular assessment of the 1,998 compromised crowns requiring localized management.</p>
+          
+          <div style="text-align: center; margin: 20px 0;">
+            ${breakdownImgSrc ? `<img src="${breakdownImgSrc}" style="width: 100%; max-height: 200px; object-fit: contain; margin: 0 auto; display: block;" />` : '<p style="color:#c0392b; font-size: 13px;">[Chart Rendering Exception]</p>'}
+          </div>
+
+          <div style="margin-top: 20px; font-size: 13px; color: #5c3d1e; line-height: 1.6;">
+            <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #e8dece;">
+              <span>🟠 <strong>Mild Stress (Treatable):</strong></span>
+              <span><strong>1,178 Trees</strong> (58.9%)</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #e8dece;">
+              <span>🔴 <strong>Severe Stress (Critical Status):</strong></span>
+              <span><strong>683 Trees</strong> (34.1%)</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; padding: 6px 0;">
+              <span>⚫ <strong>Critical / Dead Stand:</strong></span>
+              <span><strong>137 Trees</strong> (6.8%)</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="background: white; padding: 25px; border-radius: 12px; border: 1px solid #f0e8d8; page-break-inside: avoid;">
+          <h2 style="font-family: 'DM Serif Display', serif; color: #2a5c32; font-size: 19px; margin-top: 0; margin-bottom: 6px; font-weight: normal; border-bottom: 2px solid #3a7d44; padding-bottom: 6px;">3. Recommended Action Plan</h2>
+          <p style="font-size: 13px; color: #8b6b42; margin-bottom: 20px; margin-top: 0;">Prescriptive field remedies organized by targeted risk thresholds to regenerate estate health.</p>
+          
+          <div style="border-left: 4px solid #e07b2a; background: #fff8f0; padding: 14px 16px; margin-bottom: 14px; border-radius: 4px;">
+            <h4 style="margin: 0 0 8px 0; color: #b05c10; font-size: 15px; font-weight: 600;">🟠 Mild Stress Condition (1,178 Trees)</h4>
+            <ul style="margin: 0; padding-left: 20px; font-size: 12.5px; line-height: 1.6; color: #5c3d1e;">
+              <li>Apply localized <strong>NPK 12-12-17</strong> premium fertilizer compound (500g per palm structural basin).</li>
+              <li>Calibrate drip / micro-irrigation lines to supply targeted <strong>200L per tree weekly</strong>.</li>
+              <li>Deploy pheromone traps and carry out physical scouting for early-stage <strong>Rhinoceros Beetle</strong> holes.</li>
+              <li>Schedule localized unmanned aerial vehicle (UAV) re-surveying within <strong>6 weeks</strong> to assess recovery.</li>
+            </ul>
+          </div>
+
+          <div style="border-left: 4px solid #c0392b; background: #fff2f1; padding: 14px 16px; margin-bottom: 14px; border-radius: 4px;">
+            <h4 style="margin: 0 0 8px 0; color: #9a1c1c; font-size: 15px; font-weight: 600;">🔴 Severe Stress Infection (683 Trees)</h4>
+            <ul style="margin: 0; padding-left: 20px; font-size: 12.5px; line-height: 1.6; color: #5c3d1e;">
+              <li>Execute emergency systemic trunk injections utilizing authorized <strong>Imidacloprid</strong> formulations for localized crop protection.</li>
+              <li>Administer a <strong>Magnesium Sulphate (200g)</strong> ground amendment booster to correct advanced nutrient deficiency chlorosis.</li>
+              <li>Examine radical tissue structures and core samples immediately for signs of the infectious <strong>Coconut Root Wilt</strong> syndrome.</li>
+              <li>Mandate a critical comprehensive field visitation by a senior certified estate agronomist inside <strong>2 weeks</strong>.</li>
+            </ul>
+          </div>
+
+          <div style="border-left: 4px solid #7b1717; background: #fff0f0; padding: 14px 16px; border-radius: 4px;">
+            <h4 style="margin: 0 0 8px 0; color: #7b1717; font-size: 15px; font-weight: 600;">⚫ Critical Decline / Dead Stand (137 Trees)</h4>
+            <ul style="margin: 0; padding-left: 20px; font-size: 12.5px; line-height: 1.6; color: #5c3d1e;">
+              <li>Uproot and completely incinerate dead palm volumes <strong>immediately</strong> to suppress the vectors of lethal transmission.</li>
+              <li>Conduct rigorous complete chemical soil testing across the immediate affected grid coordinates prior to secondary replacement.</li>
+              <li>Replant exclusively using high-yielding, disease-resilient certified <strong>CRISL Dwarf hybrid varieties</strong>.</li>
+              <li>Transmit spatial dataset records immediately to the provincial branch of the <strong>Coconut Development Authority</strong>.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 40px; font-size: 11px; color: #8b6b42; border-top: 1px solid #e8dece; padding-top: 15px;">
+          <p style="margin: 0;">Automated Print Dispatch via <strong>AgriSense Drone Analytics Engine v2.0</strong></p>
+          <p style="margin: 4px 0 0 0; opacity: 0.7;">In partnership with Coconut Research Institute, Lunuwila, Sri Lanka · Confidential Document</p>
+        </div>
+      `;
+
+      // html2pdf layout options
+      const opt = {
+        margin: [12, 12, 12, 12],
+        filename: `Ratmalagara_NDVI_Health_Report_${timestamp}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, logging: false },
+        jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4', compress: true },
+        pagebreak: { mode: ['avoid-all', 'css'] }
+      };
+
+      // Compile and save report
+      html2pdf().set(opt).from(printArea).save().then(() => {
+        alert('✅ Interactive PDF Report downloaded successfully!');
+      });
+    }
+
+    window.addEventListener('click', (e) => {
+      if (e.target.classList.contains('modal')) {
+        e.target.classList.remove('active');
+      }
+    });
+
+    function toggleExpandable(header) {
+      header.classList.toggle('active');
+      const icon = header.querySelector('.expand-icon');
+      if (icon) icon.classList.toggle('active');
+      
+      const content = header.nextElementSibling;
+      if (content && content.classList.contains('expandable-content')) {
+        content.classList.toggle('active');
+      }
+    }
+  </script>
+
+</body>
+</html>
