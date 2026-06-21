@@ -462,7 +462,7 @@
         <div class="flex items-center justify-between mb-3">
           <div class="flex items-center gap-2">
             <span class="text-lg">🌤️</span>
-            <h3 class="font-semibold text-soil" data-i18n="weather-title">Field Weather — Kurunegala</h3>
+            <h3 class="font-semibold text-soil" data-i18n="weather-title">Field Weather — Ratmalagara</h3>
           </div>
           <button onclick="fetchWeather()" class="text-xs text-bark hover:text-leaf transition-colors" title="Refresh weather" aria-label="Refresh weather data">🔄</button>
         </div>
@@ -540,9 +540,9 @@
         <div style="margin-bottom: 12px;">
           <p class="text-xs font-semibold text-bark mb-2">Map Legend:</p>
           <div class="flex flex-wrap gap-2">
-            <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full font-medium text-xs" style="background:#e4f5e6; color:#2a5c32;">● Healthy (NDVI 0.6–1.0)</span>
-            <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full font-medium text-xs" style="background:#fdf0d5; color:#c47600;">● Moderate (NDVI 0.4–0.6)</span>
-            <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full font-medium text-xs" style="background:#fde0dd; color:#c0392b;">● Unhealthy (NDVI 0.0–0.4)</span>
+            <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full font-medium text-xs" style="background:#e4f5e6; color:#2a5c32;">● Healthy (NDVI ≥ 0.28)</span>
+            <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full font-medium text-xs" style="background:#fdf0d5; color:#c47600;">● Moderate (NDVI 0.17–0.29)</span>
+            <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full font-medium text-xs" style="background:#fde0dd; color:#c0392b;">● Unhealthy (NDVI &lt; 0.17)</span>
           </div>
         </div>
 
@@ -581,7 +581,7 @@
                 </div>
                 <span class="font-display text-2xl" style="color:#2a5c32;">3,863</span>
               </div>
-              <p class="text-xs text-bark ml-6">37.9% of estate &middot; NDVI 0.6–1.0</p>
+              <p class="text-xs text-bark ml-6">37.9% of estate &middot; NDVI ≥ 0.28</p>
             </div>
 
             <div class="p-4 rounded-xl shadow-sm border bg-white cursor-pointer hover:scale-[1.02] transition-transform duration-200" style="border-left: 4px solid #f5a623;">
@@ -592,7 +592,7 @@
                 </div>
                 <span class="font-display text-2xl" style="color:#c47600;">4,336</span>
               </div>
-              <p class="text-xs text-bark ml-6">42.5% &middot; NDVI 0.4–0.6 &middot; Monitor closely</p>
+              <p class="text-xs text-bark ml-6">42.5% &middot; NDVI 0.17–0.29 &middot; Monitor closely</p>
             </div>
 
             <div class="p-4 rounded-xl shadow-sm border bg-white cursor-pointer hover:scale-[1.02] transition-transform duration-200" style="border-left: 4px solid #c0392b;">
@@ -603,7 +603,7 @@
                 </div>
                 <span class="font-display text-2xl" style="color:#c0392b;">1,998</span>
               </div>
-              <p class="text-xs text-bark ml-6">19.5% &middot; NDVI 0.0–0.4 &middot; Urgent action needed</p>
+              <p class="text-xs text-bark ml-6">19.5% &middot; NDVI &lt; 0.17 &middot; Urgent action needed</p>
             </div>
           </div>
         </div>
@@ -620,7 +620,7 @@
             </div>
             <div class="expandable-content">
               <div class="text-sm text-soil space-y-2">
-                <p><strong>NDVI Range:</strong> 0.6 – 1.0</p>
+                <p><strong>NDVI Range:</strong> ≥ 0.28 (MEAN values 0.28–0.35)</p>
                 <p><strong>Status:</strong> Vigorous, well-maintained vegetation</p>
                 <p><strong>Recommended Action:</strong> Continue regular maintenance schedule</p>
                 <ul class="text-xs space-y-1 mt-2 ml-4">
@@ -641,7 +641,7 @@
             </div>
             <div class="expandable-content">
               <div class="text-sm text-soil space-y-2">
-                <p><strong>NDVI Range:</strong> 0.4 – 0.6</p>
+                <p><strong>NDVI Range:</strong> 0.17 – 0.29 (moderate vegetation stress)</p>
                 <p><strong>Status:</strong> Some stress visible, intervention recommended</p>
                 <p><strong>Recommended Action:</strong> Enhanced monitoring &amp; treatment</p>
                 <ul class="text-xs space-y-1 mt-2 ml-4">
@@ -662,7 +662,7 @@
             </div>
             <div class="expandable-content">
               <div class="text-sm text-soil space-y-2">
-                <p><strong>NDVI Range:</strong> 0.0 – 0.4</p>
+                <p><strong>NDVI Range:</strong> &lt; 0.17 (Critical: -0.07–0.00, Severe: 0.00–0.07, Mid: 0.09–0.15)</p>
                 <p><strong>Status:</strong> Critical condition, immediate action needed</p>
                 <p><strong>Recommended Action:</strong> Urgent intervention required</p>
                 <ul class="text-xs space-y-1 mt-2 ml-4">
@@ -864,20 +864,20 @@
     <div class="fade-up delay-7 rounded-2xl p-5 bg-white shadow-sm border border-parchment">
       <h2 class="font-display text-soil text-lg mb-1" data-i18n="ndvi-title">What Does NDVI Mean?</h2>
       <p class="text-xs text-bark mb-4">NDVI (Normalized Difference Vegetation Index) measures how green and vigorous your trees are. Higher = healthier.</p>
-      <div class="relative rounded-xl overflow-hidden h-7" style="background: linear-gradient(to right, #7b1717, #c0392b, #e07b2a, #f5c842, #6abf69, #3a7d44);">
+      <div class="relative rounded-xl overflow-hidden h-7" style="background: linear-gradient(to right, #7b1717 0%, #c0392b 18%, #e07b2a 35%, #f5c842 50%, #6abf69 75%, #3a7d44 100%);">
         <div class="absolute inset-0 flex items-center justify-between px-3 text-white text-xs font-semibold" style="text-shadow: 0 1px 3px rgba(0,0,0,0.6);">
-          <span>Dead</span><span>Critical</span><span>Severe</span><span>Mild</span><span>Moderate</span><span>Healthy</span>
+          <span>Critical</span><span>Severe</span><span>Mid Stress</span><span>Moderate</span><span>Healthy</span>
         </div>
       </div>
       <div class="flex justify-between text-xs text-bark mt-1 px-1">
-        <span>NDVI: 0.0</span><span>0.2</span><span>0.4</span><span>0.6</span><span>0.8</span><span>1.0</span>
+        <span>NDVI: -0.07</span><span>0.00</span><span>0.09</span><span>0.17</span><span>0.28</span><span>0.35+</span>
       </div>
     </div>
 
     <div class="text-center text-xs text-bark pt-2 pb-4">
-      <p>Generated by <strong>AgriSense Drone Analytics</strong> &middot; NDVI Dashboard v3.0 &middot; Data collected via DJI Phantom 4 Multispectral</p>
+      <p>Generated by <strong>AgriSense Drone Analytics</strong> &middot; NDVI Dashboard v3.1 &middot; Data collected via DJI Phantom 4 Multispectral</p>
       <p class="mt-1 opacity-60">For field support, contact your local Coconut Development Authority office.</p>
-      <p class="mt-1 opacity-60">Coconut Research Institute Lunuwila 2026.</p>
+      <p class="mt-1 opacity-60">Compiled &amp; GIS: K.P. Anura Pathirana — Soils &amp; Plant Nutrition Division, Coconut Research Institute, Lunuwila.</p>
     </div>
 
   </main>
@@ -1216,17 +1216,17 @@
             </thead>
             <tbody>
               <tr>
-                <td style="padding: 10px 12px; border: 1px solid #d8c9b0; color: #2a5c32; font-weight: bold;">Healthy (NDVI 0.6–1.0)</td>
+                <td style="padding: 10px 12px; border: 1px solid #d8c9b0; color: #2a5c32; font-weight: bold;">Healthy (NDVI ≥ 0.28)</td>
                 <td style="padding: 10px 12px; border: 1px solid #d8c9b0; text-align: right;">3,863</td>
                 <td style="padding: 10px 12px; border: 1px solid #d8c9b0; text-align: right; color: #2a5c32; font-weight: 600;">37.9%</td>
               </tr>
               <tr>
-                <td style="padding: 10px 12px; border: 1px solid #d8c9b0; color: #e07b2a; font-weight: bold;">Moderate (NDVI 0.4–0.6)</td>
+                <td style="padding: 10px 12px; border: 1px solid #d8c9b0; color: #e07b2a; font-weight: bold;">Moderate (NDVI 0.17–0.29)</td>
                 <td style="padding: 10px 12px; border: 1px solid #d8c9b0; text-align: right;">4,336</td>
                 <td style="padding: 10px 12px; border: 1px solid #d8c9b0; text-align: right; color: #e07b2a; font-weight: 600;">42.5%</td>
               </tr>
               <tr>
-                <td style="padding: 10px 12px; border: 1px solid #d8c9b0; color: #c0392b; font-weight: bold;">Unhealthy (NDVI 0.0–0.4)</td>
+                <td style="padding: 10px 12px; border: 1px solid #d8c9b0; color: #c0392b; font-weight: bold;">Unhealthy (NDVI &lt; 0.17)</td>
                 <td style="padding: 10px 12px; border: 1px solid #d8c9b0; text-align: right;">1,998</td>
                 <td style="padding: 10px 12px; border: 1px solid #d8c9b0; text-align: right; color: #c0392b; font-weight: 600;">19.5%</td>
               </tr>
@@ -1287,7 +1287,7 @@
         </div>
 
         <div style="text-align: center; margin-top: 40px; font-size: 11px; color: #8b6b42; border-top: 1px solid #e8dece; padding-top: 15px;">
-          <p style="margin: 0;">AgriSense Drone Analytics v2.1</p>
+          <p style="margin: 0;">AgriSense Drone Analytics v3.0</p>
           <p style="margin: 4px 0 0 0; opacity: 0.7;">Coconut Research Institute, Lunuwila, Sri Lanka</p>
         </div>
       `;
@@ -1316,7 +1316,7 @@
 
     // ═══════════════════════════════════════
     // WEATHER INTEGRATION (Open-Meteo — free, no API key)
-    // Kurunegala coordinates: 7.4867 N, 80.3647 E
+    // Ratmalagara Estate coordinates: 7.5480 N, 79.8930 E
     // ═══════════════════════════════════════
     var WMO_ICONS = {
       0:'☀️', 1:'🌤️', 2:'⛅', 3:'☁️',
@@ -1338,7 +1338,7 @@
     };
 
     function fetchWeather() {
-      var url = 'https://api.open-meteo.com/v1/forecast?latitude=7.4867&longitude=80.3647&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=Asia/Colombo&forecast_days=7';
+      var url = 'https://api.open-meteo.com/v1/forecast?latitude=7.5480&longitude=79.8930&current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=Asia/Colombo&forecast_days=7';
       fetch(url).then(function(r) { return r.json(); }).then(function(data) {
         renderWeather(data);
       }).catch(function() {
@@ -1540,12 +1540,6 @@
       var div = document.createElement('div');
       div.textContent = str;
       return div.innerHTML;
-    }
-
-    function formatTaskDate(ts) {
-      var d = new Date(ts);
-      var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      return months[d.getMonth()] + ' ' + d.getDate();
     }
 
     function addTask() {
@@ -1774,7 +1768,7 @@
     // ═══════════════════════════════════════
     function mobileNav(section) {
       document.querySelectorAll('.mobile-nav-btn').forEach(function(b) { b.classList.remove('active'); });
-      event.currentTarget.classList.add('active');
+      document.querySelector('[onclick*="mobileNav(\'' + section + '\')"]').classList.add('active');
       if (section === 'map') {
         document.querySelector('[data-tab="map-view"]').click();
         document.getElementById('mainContent').scrollIntoView({ behavior:'smooth' });
@@ -1804,7 +1798,7 @@
         'stat-moderate': 'මධ්‍යස්ථ',
         'stat-unhealthy': 'අසෞඛ්‍ය',
         'quick-summary': 'ඉක්මන් සාරාංශය:',
-        'weather-title': 'කාලගුණය — කුරුණෑගල',
+        'weather-title': 'කාලගුණය — රත්මලගර',
         'task-title': 'කාර්ය ලැයිස්තුව',
         'btn-pdf': '📊 PDF වාර්තාව බාගන්න',
         'btn-csv': '📥 CSV අපනයනය',
@@ -1825,7 +1819,7 @@
         'stat-moderate': 'Moderate',
         'stat-unhealthy': 'Unhealthy',
         'quick-summary': 'Quick Summary:',
-        'weather-title': 'Field Weather — Kurunegala',
+        'weather-title': 'Field Weather — Ratmalagara',
         'task-title': 'Field Task Tracker',
         'btn-pdf': '📊 Download PDF Report',
         'btn-csv': '📥 Export CSV',
