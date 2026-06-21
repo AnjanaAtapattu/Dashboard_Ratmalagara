@@ -452,19 +452,21 @@
           </div>
           <button onclick="clearCompletedTasks()" class="text-xs text-bark hover:text-stress transition-colors">Clear completed</button>
         </div>
+        <p class="text-xs text-bark mb-2">Tasks grouped by tree health category — check off as you complete them in the field</p>
         <div class="task-stats" id="taskStats">
           <span class="text-bark"><strong id="taskTotal">0</strong> total</span>
           <span class="text-emerald-700"><strong id="taskDone">0</strong> done</span>
           <span class="text-amber-700"><strong id="taskPending">0</strong> pending</span>
           <span class="text-red-700"><strong id="taskUrgent">0</strong> urgent</span>
         </div>
-        <div id="taskList" class="space-y-1 max-h-64 overflow-y-auto"></div>
+        <div id="taskList" class="space-y-1 max-h-80 overflow-y-auto"></div>
         <div class="task-add-form">
           <input type="text" id="taskInput" class="task-input" placeholder="Add new task (e.g. Inspect Block A trees)" onkeydown="if(event.key==='Enter')addTask()">
-          <select id="taskPriority" class="task-select">
-            <option value="normal">Normal</option>
-            <option value="high">High</option>
-            <option value="urgent">Urgent</option>
+          <select id="taskCategory" class="task-select">
+            <option value="critical">🔴 Critical/Dead</option>
+            <option value="severe">🟠 Severe Stress</option>
+            <option value="mild">🟡 Mid Stress</option>
+            <option value="general">📋 General</option>
           </select>
           <button onclick="addTask()" class="btn-primary" style="padding: 8px 16px; white-space: nowrap;">+ Add</button>
         </div>
@@ -1324,18 +1326,58 @@
     // ═══════════════════════════════════════
     // TASK TRACKER (localStorage-persisted)
     // ═══════════════════════════════════════
-    var TASK_KEY = 'coconut_dashboard_tasks';
+    var TASK_KEY = 'coconut_dashboard_tasks_v2';
+
+    var TASK_CATEGORIES = {
+      critical: {
+        label: '🔴 Critical / Dead — 137 Trees',
+        subtitle: 'NDVI 0.0–0.1 — Remove immediately, prevent disease spread',
+        color: '#7b1717',
+        bgColor: '#fff0f0',
+        borderColor: '#f5b0aa'
+      },
+      severe: {
+        label: '🟠 Severe Stress — 683 Trees',
+        subtitle: 'NDVI 0.1–0.3 — Urgent treatment within 2 weeks',
+        color: '#c0392b',
+        bgColor: '#fff2f1',
+        borderColor: '#f5c0bb'
+      },
+      mild: {
+        label: '🟡 Mid Stress — 1,178 Trees',
+        subtitle: 'NDVI 0.3–0.4 — Monitor and treat within 6 weeks',
+        color: '#e07b2a',
+        bgColor: '#fff8f0',
+        borderColor: '#f5d89a'
+      },
+      general: {
+        label: '📋 General Estate Tasks',
+        subtitle: 'Administrative and planning tasks',
+        color: '#8b6b42',
+        bgColor: '#faf6f0',
+        borderColor: '#e8dece'
+      }
+    };
 
     function getDefaultTasks() {
       return [
-        { id: 1, text: 'Remove 137 dead/critical trees from affected zones', priority: 'urgent', done: false, created: Date.now() },
-        { id: 2, text: 'Schedule agronomist visit for 683 severe stress trees', priority: 'urgent', done: false, created: Date.now() },
-        { id: 3, text: 'Apply Magnesium Sulphate to severe stress blocks', priority: 'high', done: false, created: Date.now() },
-        { id: 4, text: 'Deploy Rhinoceros Beetle pheromone traps in Block A', priority: 'high', done: false, created: Date.now() },
-        { id: 5, text: 'Calibrate drip irrigation for mild stress zones', priority: 'normal', done: false, created: Date.now() },
-        { id: 6, text: 'Soil test cleared critical tree sites before replanting', priority: 'high', done: false, created: Date.now() },
-        { id: 7, text: 'Order CRISL Dwarf seedlings for replanting program', priority: 'normal', done: false, created: Date.now() },
-        { id: 8, text: 'Submit spatial dataset to Coconut Development Authority', priority: 'normal', done: false, created: Date.now() },
+        { id: 1, text: 'Cut down and safely burn all dead trees', category: 'critical', done: false, created: Date.now() },
+        { id: 2, text: 'Do soil test in cleared areas before replanting', category: 'critical', done: false, created: Date.now() },
+        { id: 3, text: 'Replant with disease-resistant CRISL Dwarf variety', category: 'critical', done: false, created: Date.now() },
+        { id: 4, text: 'Report dead tree locations to Coconut Development Authority', category: 'critical', done: false, created: Date.now() },
+
+        { id: 5, text: 'Inject tree trunks with Imidacloprid (pest control)', category: 'severe', done: false, created: Date.now() },
+        { id: 6, text: 'Apply Magnesium Sulphate (200g per tree) to boost nutrients', category: 'severe', done: false, created: Date.now() },
+        { id: 7, text: 'Check tree roots for Coconut Root Wilt disease', category: 'severe', done: false, created: Date.now() },
+        { id: 8, text: 'Call agronomist for field visit within 2 weeks', category: 'severe', done: false, created: Date.now() },
+
+        { id: 9,  text: 'Apply NPK 12-12-17 fertilizer (500g per tree)', category: 'mild', done: false, created: Date.now() },
+        { id: 10, text: 'Increase watering to 200 litres per tree per week', category: 'mild', done: false, created: Date.now() },
+        { id: 11, text: 'Set up Rhinoceros Beetle traps near affected trees', category: 'mild', done: false, created: Date.now() },
+        { id: 12, text: 'Schedule drone re-survey in 6 weeks', category: 'mild', done: false, created: Date.now() },
+
+        { id: 13, text: 'Submit full spatial dataset to Coconut Development Authority', category: 'general', done: false, created: Date.now() },
+        { id: 14, text: 'Order CRISL Dwarf seedlings for replanting program', category: 'general', done: false, created: Date.now() },
       ];
     }
 
@@ -1355,29 +1397,51 @@
       var tasks = loadTasks();
       var listEl = document.getElementById('taskList');
       var html = '';
+      var categoryOrder = ['critical', 'severe', 'mild', 'general'];
 
-      tasks.sort(function(a, b) {
-        if (a.done !== b.done) return a.done ? 1 : -1;
-        var pOrder = { urgent: 0, high: 1, normal: 2 };
-        return (pOrder[a.priority] || 2) - (pOrder[b.priority] || 2);
-      });
+      categoryOrder.forEach(function(cat) {
+        var catTasks = tasks.filter(function(t) { return t.category === cat; });
+        if (catTasks.length === 0) return;
 
-      tasks.forEach(function(task) {
-        var priorityClass = 'priority-' + task.priority;
-        var priorityLabel = task.priority.charAt(0).toUpperCase() + task.priority.slice(1);
-        html += '<div class="task-item' + (task.done ? ' completed' : '') + '">' +
-          '<div class="task-checkbox' + (task.done ? ' checked' : '') + '" onclick="toggleTask(' + task.id + ')">' +
-            (task.done ? '<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6L5 9L10 3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '') +
-          '</div>' +
-          '<div style="flex:1; min-width:0;">' +
-            '<div class="task-text text-sm text-soil" style="word-break:break-word;">' + escapeHtml(task.text) + '</div>' +
-            '<div class="flex items-center gap-2 mt-1">' +
-              '<span class="task-priority ' + priorityClass + '">' + priorityLabel + '</span>' +
-              '<span class="text-xs text-bark">' + formatTaskDate(task.created) + '</span>' +
+        var info = TASK_CATEGORIES[cat];
+        var doneCt = catTasks.filter(function(t) { return t.done; }).length;
+        var totalCt = catTasks.length;
+        var pct = totalCt > 0 ? Math.round((doneCt / totalCt) * 100) : 0;
+
+        html += '<div class="task-category-group" style="margin-bottom: 14px; border: 1px solid ' + info.borderColor + '; border-radius: 10px; overflow: hidden;">';
+
+        // Category header
+        html += '<div style="background:' + info.bgColor + '; padding: 10px 14px; border-left: 4px solid ' + info.color + '; display: flex; justify-content: space-between; align-items: center;">';
+        html += '<div>';
+        html += '<div style="font-weight: 700; font-size: 0.85rem; color:' + info.color + ';">' + info.label + '</div>';
+        html += '<div style="font-size: 0.7rem; color: #8b6b42; margin-top: 2px;">' + info.subtitle + '</div>';
+        html += '</div>';
+        html += '<div style="text-align: right;">';
+        html += '<div style="font-size: 0.75rem; font-weight: 700; color:' + info.color + ';">' + doneCt + '/' + totalCt + '</div>';
+        html += '<div style="width: 50px; height: 4px; background: #e8dece; border-radius: 99px; margin-top: 3px; overflow: hidden;">';
+        html += '<div style="width:' + pct + '%; height: 100%; background:' + info.color + '; border-radius: 99px; transition: width 0.5s;"></div>';
+        html += '</div>';
+        html += '</div>';
+        html += '</div>';
+
+        // Tasks in this category
+        var pending = catTasks.filter(function(t) { return !t.done; });
+        var completed = catTasks.filter(function(t) { return t.done; });
+        var sorted = pending.concat(completed);
+
+        sorted.forEach(function(task) {
+          html += '<div class="task-item' + (task.done ? ' completed' : '') + '" style="padding: 8px 14px; border-top: 1px solid ' + info.borderColor + ';">' +
+            '<div class="task-checkbox' + (task.done ? ' checked' : '') + '" onclick="toggleTask(' + task.id + ')" style="' + (task.done ? '' : 'border-color:' + info.color) + '">' +
+              (task.done ? '<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 6L5 9L10 3" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>' : '') +
             '</div>' +
-          '</div>' +
-          '<button onclick="deleteTask(' + task.id + ')" class="text-bark hover:text-stress text-sm flex-shrink-0" title="Delete task">✕</button>' +
-        '</div>';
+            '<div style="flex:1; min-width:0;">' +
+              '<div class="task-text text-sm text-soil" style="word-break:break-word;">' + escapeHtml(task.text) + '</div>' +
+            '</div>' +
+            '<button onclick="deleteTask(' + task.id + ')" class="text-bark hover:text-stress text-sm flex-shrink-0" title="Delete task">✕</button>' +
+          '</div>';
+        });
+
+        html += '</div>';
       });
 
       if (tasks.length === 0) {
@@ -1388,11 +1452,11 @@
 
       var total = tasks.length;
       var done = tasks.filter(function(t) { return t.done; }).length;
-      var urgent = tasks.filter(function(t) { return !t.done && t.priority === 'urgent'; }).length;
+      var critPending = tasks.filter(function(t) { return !t.done && t.category === 'critical'; }).length;
       document.getElementById('taskTotal').textContent = total;
       document.getElementById('taskDone').textContent = done;
       document.getElementById('taskPending').textContent = total - done;
-      document.getElementById('taskUrgent').textContent = urgent;
+      document.getElementById('taskUrgent').textContent = critPending;
     }
 
     function escapeHtml(str) {
@@ -1416,7 +1480,7 @@
       tasks.push({
         id: maxId + 1,
         text: text,
-        priority: document.getElementById('taskPriority').value,
+        category: document.getElementById('taskCategory').value,
         done: false,
         created: Date.now()
       });
