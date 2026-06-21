@@ -93,12 +93,16 @@
 
         /* Block boundary labels */
         .block-label {
-            background: none;
+            background: rgba(0,0,0,0.6);
             border: none;
+            border-radius: 4px;
+            padding: 2px 6px;
             font-size: 11px;
             font-weight: 700;
             color: #fff;
-            text-shadow: 0 0 4px rgba(0,0,0,0.8), 0 0 2px rgba(0,0,0,0.9);
+            text-shadow: none;
+            text-align: center;
+            line-height: 1.3;
             white-space: nowrap;
             pointer-events: none;
         }
@@ -919,17 +923,18 @@
         };
         map.createPane('pane_BlockBoundaries');
         map.getPane('pane_BlockBoundaries').style.zIndex = 409;
+        var blockLabels = [];
         var layer_BlockBoundaries = new L.geoJson(json_BlockBoundaries, {
             pane: 'pane_BlockBoundaries',
             interactive: true,
             style: function(feature) {
                 return {
                     color: blockColors[feature.properties.Block] || '#ffffff',
-                    weight: 2.5,
+                    weight: 3,
                     opacity: 1,
-                    fillOpacity: 0.10,
+                    fillOpacity: 0.15,
                     fillColor: blockColors[feature.properties.Block] || '#ffffff',
-                    dashArray: '6 3'
+                    dashArray: '8 4'
                 };
             },
             onEachFeature: function(feature, layer) {
@@ -940,22 +945,25 @@
                     '<tr><td>Note:</td><td>' + (p.Note || '') + '</td></tr>' +
                     '</table>';
                 layer.bindPopup(popupContent, { maxHeight: 400 });
-                // Add label at centroid
-                var bounds = layer.getBounds();
-                var center = bounds.getCenter();
-                var label = L.marker(center, {
-                    icon: L.divIcon({
-                        className: 'block-label',
-                        html: p.Block,
-                        iconSize: [60, 14],
-                        iconAnchor: [30, 7]
-                    }),
-                    pane: 'pane_BlockBoundaries',
-                    interactive: false
-                });
-                layer_BlockBoundaries.addLayer(label);
+                blockLabels.push({props: p, layer: layer});
             }
         });
+        // Add centroid labels after GeoJSON layer is fully created
+        for (var i = 0; i < blockLabels.length; i++) {
+            var bl = blockLabels[i];
+            var center = bl.layer.getBounds().getCenter();
+            var label = L.marker(center, {
+                icon: L.divIcon({
+                    className: 'block-label',
+                    html: '<strong>' + bl.props.Block + '</strong><br><span style="font-size:9px">' + bl.props.Acres + ' ac</span>',
+                    iconSize: [80, 28],
+                    iconAnchor: [40, 14]
+                }),
+                pane: 'pane_BlockBoundaries',
+                interactive: false
+            });
+            layer_BlockBoundaries.addLayer(label);
+        }
         bounds_group.addLayer(layer_BlockBoundaries);
         map.addLayer(layer_BlockBoundaries);
 

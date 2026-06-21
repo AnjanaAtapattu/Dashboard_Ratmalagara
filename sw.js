@@ -1,4 +1,4 @@
-var CACHE_NAME = 'coconut-dashboard-v3.0';
+var CACHE_NAME = 'coconut-dashboard-v3.1';
 var ASSETS = [
   './',
   './index.html',
@@ -27,6 +27,8 @@ var ASSETS = [
   './qgis2web_2026_05_18-14_42_39_257126/js/labels.js',
   './qgis2web_2026_05_18-14_42_39_257126/js/leaflet.photon.js',
   './qgis2web_2026_05_18-14_42_39_257126/js/leaflet-measure.js',
+  './qgis2web_2026_05_18-14_42_39_257126/data/BlockBoundaries.js',
+  './qgis2web_2026_05_18-14_42_39_257126/data/Locations.js',
   './qgis2web_2026_05_18-14_42_39_257126/data/Boundary_2.js',
   './qgis2web_2026_05_18-14_42_39_257126/data/Critical_3.js',
   './qgis2web_2026_05_18-14_42_39_257126/data/Severs_Stress_4.js',
