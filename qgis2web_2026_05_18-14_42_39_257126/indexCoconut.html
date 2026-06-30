@@ -357,6 +357,35 @@
             highlightLayer = e.target;
             highlightLayer.openPopup();
         }
+        // Tree selection & comments state (must exist before layers are built below, since
+        // each layer's onEachFeature popup builder reads from these on construction)
+        var selectedTrees = {};
+        var treeComments = JSON.parse(localStorage.getItem('treeComments') || '{}');
+        var treePhotos = JSON.parse(localStorage.getItem('treePhotos') || '{}');
+        var BLOCK_BOUNDS = [
+            {name:'Block 1', latMin:7.5416, latMax:7.5465, lonMin:79.886, lonMax:79.894},
+            {name:'Block 2', latMin:7.5465, latMax:7.5490, lonMin:79.886, lonMax:79.891},
+            {name:'Block 3', latMin:7.5465, latMax:7.5490, lonMin:79.891, lonMax:79.896},
+            {name:'Block 4', latMin:7.5490, latMax:7.5530, lonMin:79.886, lonMax:79.894},
+            {name:'Block 5A', latMin:7.5430, latMax:7.5455, lonMin:79.894, lonMax:79.898},
+            {name:'Block 5B', latMin:7.5455, latMax:7.5490, lonMin:79.894, lonMax:79.900},
+            {name:'Block 6', latMin:7.5490, latMax:7.5520, lonMin:79.894, lonMax:79.900},
+            {name:'Block 7A', latMin:7.5520, latMax:7.5540, lonMin:79.889, lonMax:79.894},
+            {name:'Block 7B', latMin:7.5520, latMax:7.5540, lonMin:79.894, lonMax:79.900},
+            {name:'Block 7C', latMin:7.5540, latMax:7.5562, lonMin:79.889, lonMax:79.894},
+            {name:'Block 7D', latMin:7.5540, latMax:7.5562, lonMin:79.894, lonMax:79.901},
+            {name:'Block 8A', latMin:7.5416, latMax:7.5440, lonMin:79.894, lonMax:79.901},
+            {name:'Block 8B', latMin:7.5440, latMax:7.5465, lonMin:79.898, lonMax:79.901},
+            {name:'Block 9', latMin:7.5530, latMax:7.5562, lonMin:79.886, lonMax:79.889}
+        ];
+        function getTreeBlock(coords) {
+            var lat = parseFloat(coords.lat), lon = parseFloat(coords.lon);
+            for (var i = 0; i < BLOCK_BOUNDS.length; i++) {
+                var b = BLOCK_BOUNDS[i];
+                if (lat >= b.latMin && lat <= b.latMax && lon >= b.lonMin && lon <= b.lonMax) return b.name;
+            }
+            return null;
+        }
         var map = L.map('map', {
             zoomControl:false, maxZoom:28, minZoom:1
         }).fitBounds([[7.543207261086193,79.88601747918575],[7.553582324054899,79.89933044151552]]);
@@ -842,13 +871,6 @@
             }
         });
 
-        // ═══════════════════════════════════════
-        // TREE SELECTION & COMMENTS SYSTEM
-        // ═══════════════════════════════════════
-        var selectedTrees = {};
-        var treeComments = JSON.parse(localStorage.getItem('treeComments') || '{}');
-        var treePhotos = JSON.parse(localStorage.getItem('treePhotos') || '{}');
-
         function getTreeCoords(feature) {
             var geom = feature.geometry;
             if (geom.type === 'Point') return {lat: geom.coordinates[1], lon: geom.coordinates[0]};
@@ -1060,22 +1082,6 @@
         // ═══════════════════════════════════════
         // #2 — BLOCK FILTER (spatial, boundary-based)
         // ═══════════════════════════════════════
-        var BLOCK_BOUNDS = [
-            {name:'Block 1', latMin:7.5416, latMax:7.5465, lonMin:79.886, lonMax:79.894},
-            {name:'Block 2', latMin:7.5465, latMax:7.5490, lonMin:79.886, lonMax:79.891},
-            {name:'Block 3', latMin:7.5465, latMax:7.5490, lonMin:79.891, lonMax:79.896},
-            {name:'Block 4', latMin:7.5490, latMax:7.5530, lonMin:79.886, lonMax:79.894},
-            {name:'Block 5A', latMin:7.5430, latMax:7.5455, lonMin:79.894, lonMax:79.898},
-            {name:'Block 5B', latMin:7.5455, latMax:7.5490, lonMin:79.894, lonMax:79.900},
-            {name:'Block 6', latMin:7.5490, latMax:7.5520, lonMin:79.894, lonMax:79.900},
-            {name:'Block 7A', latMin:7.5520, latMax:7.5540, lonMin:79.889, lonMax:79.894},
-            {name:'Block 7B', latMin:7.5520, latMax:7.5540, lonMin:79.894, lonMax:79.900},
-            {name:'Block 7C', latMin:7.5540, latMax:7.5562, lonMin:79.889, lonMax:79.894},
-            {name:'Block 7D', latMin:7.5540, latMax:7.5562, lonMin:79.894, lonMax:79.901},
-            {name:'Block 8A', latMin:7.5416, latMax:7.5440, lonMin:79.894, lonMax:79.901},
-            {name:'Block 8B', latMin:7.5440, latMax:7.5465, lonMin:79.898, lonMax:79.901},
-            {name:'Block 9', latMin:7.5530, latMax:7.5562, lonMin:79.886, lonMax:79.889}
-        ];
         (function initBlockFilter() {
             var sel = document.getElementById('selBlockFilter');
             BLOCK_BOUNDS.forEach(function(b) {
@@ -1085,15 +1091,6 @@
                 sel.appendChild(opt);
             });
         })();
-
-        function getTreeBlock(coords) {
-            var lat = parseFloat(coords.lat), lon = parseFloat(coords.lon);
-            for (var i = 0; i < BLOCK_BOUNDS.length; i++) {
-                var b = BLOCK_BOUNDS[i];
-                if (lat >= b.latMin && lat <= b.latMax && lon >= b.lonMin && lon <= b.lonMax) return b.name;
-            }
-            return null;
-        }
 
         function filterByBlock() {
             var blockVal = document.getElementById('selBlockFilter').value;
