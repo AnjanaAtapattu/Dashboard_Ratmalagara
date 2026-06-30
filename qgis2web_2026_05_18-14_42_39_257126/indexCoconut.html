@@ -346,7 +346,7 @@
         <script src="js/leaflet-measure.js"></script>
         <script src="data/Boundary_2.js"></script>
         <script src="data/Critical_3.js"></script>
-        <script src="data/Severs_Stress_4.js"></script>
+        <script src="data/Severe_Stress_4.js"></script>
         <script src="data/Mid_Stress_5.js"></script>
         <script src="data/Unhealthy_6.js"></script>
         <script src="data/Moderate_7.js"></script>
@@ -585,16 +585,16 @@
         });
         bounds_group.addLayer(layer_Critical_3);
         map.addLayer(layer_Critical_3);
-        function pop_Severs_Stress_4(feature, layer) {
+        function pop_Severe_Stress_4(feature, layer) {
             layer.on({ mouseout: function(e) { if (typeof layer.closePopup == 'function') layer.closePopup(); else layer.eachLayer(function(f){ f.closePopup(); }); }, mouseover: highlightFeature, click: highlightFeature });
             var content = buildEnhancedPopup(feature, 'Severe Stress', '🔶', 'status-unhealthy', '#c0392b');
             layer.on('popupopen', function(e) { addClassToPopupIfMedia(content, e.popup); });
             layer.bindPopup(content, { maxHeight: 500, maxWidth: 320 });
         }
 
-        function style_Severs_Stress_4_0() {
+        function style_Severe_Stress_4_0() {
             return {
-                pane: 'pane_Severs_Stress_4',
+                pane: 'pane_Severe_Stress_4',
                 opacity: 1,
                 color: 'rgba(192,57,43,0.6)',
                 dashArray: '',
@@ -607,20 +607,20 @@
                 interactive: true,
             }
         }
-        map.createPane('pane_Severs_Stress_4');
-        map.getPane('pane_Severs_Stress_4').style.zIndex = 404;
-        map.getPane('pane_Severs_Stress_4').style['mix-blend-mode'] = 'normal';
-        var layer_Severs_Stress_4 = new L.geoJson(json_Severs_Stress_4, {
+        map.createPane('pane_Severe_Stress_4');
+        map.getPane('pane_Severe_Stress_4').style.zIndex = 404;
+        map.getPane('pane_Severe_Stress_4').style['mix-blend-mode'] = 'normal';
+        var layer_Severe_Stress_4 = new L.geoJson(json_Severe_Stress_4, {
             attribution: '',
             interactive: true,
-            dataVar: 'json_Severs_Stress_4',
-            layerName: 'layer_Severs_Stress_4',
-            pane: 'pane_Severs_Stress_4',
-            onEachFeature: pop_Severs_Stress_4,
-            style: style_Severs_Stress_4_0,
+            dataVar: 'json_Severe_Stress_4',
+            layerName: 'layer_Severe_Stress_4',
+            pane: 'pane_Severe_Stress_4',
+            onEachFeature: pop_Severe_Stress_4,
+            style: style_Severe_Stress_4_0,
         });
-        bounds_group.addLayer(layer_Severs_Stress_4);
-        map.addLayer(layer_Severs_Stress_4);
+        bounds_group.addLayer(layer_Severe_Stress_4);
+        map.addLayer(layer_Severe_Stress_4);
         function pop_Mid_Stress_5(feature, layer) {
             layer.on({ mouseout: function(e) { if (typeof layer.closePopup == 'function') layer.closePopup(); else layer.eachLayer(function(f){ f.closePopup(); }); }, mouseover: highlightFeature, click: highlightFeature });
             var content = buildEnhancedPopup(feature, 'Mid Stress', '🟠', 'status-moderate', '#e07b2a');
@@ -770,7 +770,7 @@
             {label: '<img src="legend/Moderate_7.png" /> Moderate', layer: layer_Moderate_7},
             {label: '<img src="legend/Unhealthy_6.png" /> Unhealthy', layer: layer_Unhealthy_6},
             {label: '<img src="legend/Mid_Stress_5.png" /> Mid_Stress', layer: layer_Mid_Stress_5},
-            {label: '<img src="legend/Severs_Stress_4.png" /> Severs_Stress', layer: layer_Severs_Stress_4},
+            {label: '<img src="legend/Severe_Stress_4.png" /> Severe Stress', layer: layer_Severe_Stress_4},
             {label: '<img src="legend/Critical_3.png" /> Critical', layer: layer_Critical_3},
             {label: '<img src="legend/Boundary_2.png" /> Boundary', layer: layer_Boundary_2},
             {label: "Ratmalagara Research Center", layer: layer_RatmalagaraEstate_1},
@@ -874,7 +874,7 @@
         }
 
         function selectAllVisible() {
-            var layers = [layer_Critical_3, layer_Severs_Stress_4, layer_Mid_Stress_5, layer_Unhealthy_6, layer_Moderate_7, layer_Healthy_8];
+            var layers = [layer_Critical_3, layer_Severe_Stress_4, layer_Mid_Stress_5, layer_Unhealthy_6, layer_Moderate_7, layer_Healthy_8];
             var statusMap = {0:'Critical',1:'Severe Stress',2:'Mid Stress',3:'Unhealthy',4:'Moderate',5:'Healthy'};
             layers.forEach(function(lyr, idx) {
                 if (!map.hasLayer(lyr)) return;
@@ -893,15 +893,15 @@
         function filterByHealth() {
             var val = document.getElementById('selHealthFilter').value;
             var layerMap = {
-                'all': [layer_Critical_3, layer_Severs_Stress_4, layer_Mid_Stress_5, layer_Unhealthy_6, layer_Moderate_7, layer_Healthy_8],
+                'all': [layer_Critical_3, layer_Severe_Stress_4, layer_Mid_Stress_5, layer_Unhealthy_6, layer_Moderate_7, layer_Healthy_8],
                 'healthy': [layer_Healthy_8],
                 'moderate': [layer_Moderate_7],
                 'unhealthy': [layer_Unhealthy_6],
                 'mid_stress': [layer_Mid_Stress_5],
-                'severe': [layer_Severs_Stress_4],
+                'severe': [layer_Severe_Stress_4],
                 'critical': [layer_Critical_3]
             };
-            var allLayers = [layer_Critical_3, layer_Severs_Stress_4, layer_Mid_Stress_5, layer_Unhealthy_6, layer_Moderate_7, layer_Healthy_8];
+            var allLayers = [layer_Critical_3, layer_Severe_Stress_4, layer_Mid_Stress_5, layer_Unhealthy_6, layer_Moderate_7, layer_Healthy_8];
             var show = layerMap[val] || allLayers;
             allLayers.forEach(function(lyr) {
                 if (show.indexOf(lyr) >= 0) {
@@ -1103,11 +1103,11 @@
             }
             var healthVal = document.getElementById('selHealthFilter').value;
             var healthLayers = {
-                'all': [layer_Critical_3, layer_Severs_Stress_4, layer_Mid_Stress_5, layer_Unhealthy_6, layer_Moderate_7, layer_Healthy_8],
+                'all': [layer_Critical_3, layer_Severe_Stress_4, layer_Mid_Stress_5, layer_Unhealthy_6, layer_Moderate_7, layer_Healthy_8],
                 'healthy': [layer_Healthy_8], 'moderate': [layer_Moderate_7], 'unhealthy': [layer_Unhealthy_6],
-                'mid_stress': [layer_Mid_Stress_5], 'severe': [layer_Severs_Stress_4], 'critical': [layer_Critical_3]
+                'mid_stress': [layer_Mid_Stress_5], 'severe': [layer_Severe_Stress_4], 'critical': [layer_Critical_3]
             };
-            var allLayers = [layer_Critical_3, layer_Severs_Stress_4, layer_Mid_Stress_5, layer_Unhealthy_6, layer_Moderate_7, layer_Healthy_8];
+            var allLayers = [layer_Critical_3, layer_Severe_Stress_4, layer_Mid_Stress_5, layer_Unhealthy_6, layer_Moderate_7, layer_Healthy_8];
             var show = healthLayers[healthVal] || allLayers;
             var block = BLOCK_BOUNDS.find(function(b) { return b.name === blockVal; });
             allLayers.forEach(function(lyr) {
@@ -1136,7 +1136,7 @@
             {layer: layer_Healthy_8, status: 'Healthy'},
             {layer: layer_Moderate_7, status: 'Moderate'},
             {layer: layer_Mid_Stress_5, status: 'Mid Stress'},
-            {layer: layer_Severs_Stress_4, status: 'Severe Stress'},
+            {layer: layer_Severe_Stress_4, status: 'Severe Stress'},
             {layer: layer_Critical_3, status: 'Critical'}
         ];
 

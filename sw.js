@@ -31,7 +31,7 @@ var ASSETS = [
   './qgis2web_2026_05_18-14_42_39_257126/js/leaflet-measure.js',
   './qgis2web_2026_05_18-14_42_39_257126/data/Boundary_2.js',
   './qgis2web_2026_05_18-14_42_39_257126/data/Critical_3.js',
-  './qgis2web_2026_05_18-14_42_39_257126/data/Severs_Stress_4.js',
+  './qgis2web_2026_05_18-14_42_39_257126/data/Severe_Stress_4.js',
   './qgis2web_2026_05_18-14_42_39_257126/data/Mid_Stress_5.js',
   './qgis2web_2026_05_18-14_42_39_257126/data/Unhealthy_6.js',
   './qgis2web_2026_05_18-14_42_39_257126/data/Moderate_7.js',
@@ -47,7 +47,7 @@ var ASSETS = [
   './qgis2web_2026_05_18-14_42_39_257126/legend/Healthy_8.png',
   './qgis2web_2026_05_18-14_42_39_257126/legend/Mid_Stress_5.png',
   './qgis2web_2026_05_18-14_42_39_257126/legend/Moderate_7.png',
-  './qgis2web_2026_05_18-14_42_39_257126/legend/Severs_Stress_4.png',
+  './qgis2web_2026_05_18-14_42_39_257126/legend/Severe_Stress_4.png',
   './qgis2web_2026_05_18-14_42_39_257126/legend/Unhealthy_6.png',
   './qgis2web_2026_05_18-14_42_39_257126/webfonts/fa-solid-900.woff2',
 ];
