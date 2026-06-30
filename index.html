@@ -553,7 +553,7 @@
           <select id="taskCategory" class="task-select">
             <option value="critical">🔴 Critical/Dead</option>
             <option value="severe">🟠 Severe Stress</option>
-            <option value="mild">🟡 Mid Stress</option>
+            <option value="mild">🟡 Mild Stress</option>
             <option value="general">📋 General</option>
           </select>
           <button onclick="addTask()" class="btn-primary" style="padding: 8px 16px; white-space: nowrap;" aria-label="Add new task">+ Add</button>
@@ -974,7 +974,7 @@
       <p class="text-xs text-bark mb-4">NDVI (Normalized Difference Vegetation Index) measures how green and vigorous your trees are. Higher = healthier.</p>
       <div class="relative rounded-xl overflow-hidden h-7" style="background: linear-gradient(to right, #7b1717 0%, #c0392b 18%, #e07b2a 35%, #f5c842 50%, #6abf69 75%, #3a7d44 100%);">
         <div class="absolute inset-0 flex items-center justify-between px-3 text-white text-xs font-semibold" style="text-shadow: 0 1px 3px rgba(0,0,0,0.6);">
-          <span>Critical</span><span>Severe</span><span>Mid Stress</span><span>Moderate</span><span>Healthy</span>
+          <span>Critical</span><span>Severe</span><span>Mild Stress</span><span>Moderate</span><span>Healthy</span>
         </div>
       </div>
       <div class="flex justify-between text-xs text-bark mt-1 px-1">
@@ -1775,7 +1775,7 @@
         borderColor: '#f5c0bb'
       },
       mild: {
-        label: '🟡 Mid Stress — 1,178 Trees',
+        label: '🟡 Mild Stress — 1,178 Trees',
         subtitle: 'NDVI 0.09–0.17 — Monitor and treat within 6 weeks',
         color: '#e07b2a',
         bgColor: '#fff8f0',
@@ -2290,7 +2290,8 @@
     // #7 — SURVEY STALENESS INDICATOR
     // ═══════════════════════════════════════
     function checkSurveyStaleness() {
-      var surveyDate = new Date('2026-02-15');
+      var SURVEY_DATE = new Date('2026-02-15');
+      var surveyDate = SURVEY_DATE;
       var now = new Date();
       var weeksDiff = Math.floor((now - surveyDate) / (7 * 24 * 60 * 60 * 1000));
       var indicator = document.getElementById('surveyStaleIndicator');
