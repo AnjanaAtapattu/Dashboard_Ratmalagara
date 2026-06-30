@@ -550,7 +550,7 @@
         bounds_group.addLayer(layer_Boundary_2);
         map.addLayer(layer_Boundary_2);
         function pop_Critical_3(feature, layer) {
-            layer.on({ mouseout: function(e) { if (typeof layer.closePopup == 'function') layer.closePopup(); else layer.eachLayer(function(f){ f.closePopup(); }); }, mouseover: highlightFeature });
+            layer.on({ mouseout: function(e) { if (typeof layer.closePopup == 'function') layer.closePopup(); else layer.eachLayer(function(f){ f.closePopup(); }); }, mouseover: highlightFeature, click: highlightFeature });
             var content = buildEnhancedPopup(feature, 'Critical', '🔴', 'status-unhealthy', '#c0392b');
             layer.on('popupopen', function(e) { addClassToPopupIfMedia(content, e.popup); });
             layer.bindPopup(content, { maxHeight: 500, maxWidth: 320 });
@@ -586,7 +586,7 @@
         bounds_group.addLayer(layer_Critical_3);
         map.addLayer(layer_Critical_3);
         function pop_Severs_Stress_4(feature, layer) {
-            layer.on({ mouseout: function(e) { if (typeof layer.closePopup == 'function') layer.closePopup(); else layer.eachLayer(function(f){ f.closePopup(); }); }, mouseover: highlightFeature });
+            layer.on({ mouseout: function(e) { if (typeof layer.closePopup == 'function') layer.closePopup(); else layer.eachLayer(function(f){ f.closePopup(); }); }, mouseover: highlightFeature, click: highlightFeature });
             var content = buildEnhancedPopup(feature, 'Severe Stress', '🔶', 'status-unhealthy', '#c0392b');
             layer.on('popupopen', function(e) { addClassToPopupIfMedia(content, e.popup); });
             layer.bindPopup(content, { maxHeight: 500, maxWidth: 320 });
@@ -622,7 +622,7 @@
         bounds_group.addLayer(layer_Severs_Stress_4);
         map.addLayer(layer_Severs_Stress_4);
         function pop_Mid_Stress_5(feature, layer) {
-            layer.on({ mouseout: function(e) { if (typeof layer.closePopup == 'function') layer.closePopup(); else layer.eachLayer(function(f){ f.closePopup(); }); }, mouseover: highlightFeature });
+            layer.on({ mouseout: function(e) { if (typeof layer.closePopup == 'function') layer.closePopup(); else layer.eachLayer(function(f){ f.closePopup(); }); }, mouseover: highlightFeature, click: highlightFeature });
             var content = buildEnhancedPopup(feature, 'Mid Stress', '🟠', 'status-moderate', '#e07b2a');
             layer.on('popupopen', function(e) { addClassToPopupIfMedia(content, e.popup); });
             layer.bindPopup(content, { maxHeight: 500, maxWidth: 320 });
@@ -658,7 +658,7 @@
         bounds_group.addLayer(layer_Mid_Stress_5);
         map.addLayer(layer_Mid_Stress_5);
         function pop_Unhealthy_6(feature, layer) {
-            layer.on({ mouseout: function(e) { if (typeof layer.closePopup == 'function') layer.closePopup(); else layer.eachLayer(function(f){ f.closePopup(); }); }, mouseover: highlightFeature });
+            layer.on({ mouseout: function(e) { if (typeof layer.closePopup == 'function') layer.closePopup(); else layer.eachLayer(function(f){ f.closePopup(); }); }, mouseover: highlightFeature, click: highlightFeature });
             var content = buildEnhancedPopup(feature, 'Unhealthy', '🚨', 'status-unhealthy', '#c0392b');
             layer.on('popupopen', function(e) { addClassToPopupIfMedia(content, e.popup); });
             layer.bindPopup(content, { maxHeight: 500, maxWidth: 320 });
@@ -694,7 +694,7 @@
         bounds_group.addLayer(layer_Unhealthy_6);
         map.addLayer(layer_Unhealthy_6);
         function pop_Moderate_7(feature, layer) {
-            layer.on({ mouseout: function(e) { if (typeof layer.closePopup == 'function') layer.closePopup(); else layer.eachLayer(function(f){ f.closePopup(); }); }, mouseover: highlightFeature });
+            layer.on({ mouseout: function(e) { if (typeof layer.closePopup == 'function') layer.closePopup(); else layer.eachLayer(function(f){ f.closePopup(); }); }, mouseover: highlightFeature, click: highlightFeature });
             var content = buildEnhancedPopup(feature, 'Moderate', '🟡', 'status-moderate', '#c47600');
             layer.on('popupopen', function(e) { addClassToPopupIfMedia(content, e.popup); });
             layer.bindPopup(content, { maxHeight: 500, maxWidth: 320 });
@@ -730,7 +730,7 @@
         bounds_group.addLayer(layer_Moderate_7);
         map.addLayer(layer_Moderate_7);
         function pop_Healthy_8(feature, layer) {
-            layer.on({ mouseout: function(e) { if (typeof layer.closePopup == 'function') layer.closePopup(); else layer.eachLayer(function(f){ f.closePopup(); }); }, mouseover: highlightFeature });
+            layer.on({ mouseout: function(e) { if (typeof layer.closePopup == 'function') layer.closePopup(); else layer.eachLayer(function(f){ f.closePopup(); }); }, mouseover: highlightFeature, click: highlightFeature });
             var content = buildEnhancedPopup(feature, 'Healthy', '✅', 'status-healthy', '#2a5c32');
             layer.on('popupopen', function(e) { addClassToPopupIfMedia(content, e.popup); });
             layer.bindPopup(content, { maxHeight: 500, maxWidth: 320 });
